@@ -1,0 +1,31 @@
+{
+  "name": "@cascateer/core",
+  "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cascateer/core.git"
+  },
+  "scripts": {
+    "patch": "npm version patch && git push origin main --tags"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./jsx-runtime": "./src/jsx-runtime.ts",
+    "./jsx-dev-runtime": "./src/jsx-dev-runtime.ts",
+    "./lib": "./src/lib/index.ts",
+    "./operators": "./src/operators/index.ts"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.17.20",
+    "@types/object-hash": "^3.0.6",
+    "@types/react": "^19.2.14",
+    "typescript": "~5.8.3",
+    "vite": "^8.0.7"
+  },
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "object-hash": "^3.0.0",
+    "rxjs": "^7.8.2",
+    "uuid": "^13.0.0"
+  }
+}
