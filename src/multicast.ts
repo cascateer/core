@@ -77,3 +77,5 @@ self.addEventListener("connect", ({ ports }) => {
     ).subscribe();
   }
 });
+
+export default {};
