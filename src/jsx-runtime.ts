@@ -190,3 +190,6 @@ export const createElement = (
 
 export const createFragment = ({ children }: JSX.IntrinsicAttributes) =>
   new ObservableFragment(children);
+
+export const jsx = createElement;
+export const Fragment = createFragment;
