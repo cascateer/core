@@ -91,7 +91,9 @@ export const multicast = <Seed>(
       ),
       concatMap((message) => key.then((key) => message({ key, id: v4() }))),
       exchangeWith<MulticastHostMessage, MulticastClientMessage>(
-        new SharedWorker(new URL("../multicast.ts", import.meta.url)).port,
+        new SharedWorker(new URL("../multicast.ts", import.meta.url), {
+          type: "module",
+        }).port,
       ),
       shareReplay({ refCount: false }),
     ),
