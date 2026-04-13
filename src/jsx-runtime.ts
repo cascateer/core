@@ -75,6 +75,9 @@ declare global {
   }
 }
 
+export const createFragment = ({ children }: JSX.IntrinsicAttributes) =>
+  new ObservableFragment(children);
+
 export const createElement = (
   component: JSX.Component | string,
   attributes: JSX.IntrinsicAttributes | null,
@@ -188,9 +191,6 @@ export const createElement = (
   }
 };
 
-export const createFragment = ({ children }: JSX.IntrinsicAttributes) =>
-  new ObservableFragment(children);
-
+export const Fragment = createFragment;
 export const jsx = createElement;
 export const jsxs = createElement;
-export const Fragment = createFragment;
