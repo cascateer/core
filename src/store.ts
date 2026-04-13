@@ -231,6 +231,8 @@ export class StoreProvider<Data> extends ExtendableStoreAdapter<
           value: merge(seedActions, transformActions).pipe(
             sequence<MulticastAction<Data>, Data>(
               ([action, previousAction], [previousState]) => {
+                console.log(action);
+
                 if (action.type === "seedAction") {
                   return action.predicate();
                 }
