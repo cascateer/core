@@ -1,6 +1,5 @@
 import { concatMap, shareReplay, startWith, UnaryFunction } from "rxjs";
 import { v4 } from "uuid";
-import SharedWorker from "../multicast?sharedworker";
 import { ComputedSignal, TransformSubject } from "../observable";
 import { exchangeWith, transform } from "../operators";
 import { Transform } from "../types";
@@ -92,7 +91,7 @@ export const multicast = <Seed>(
       ),
       concatMap((message) => key.then((key) => message({ key, id: v4() }))),
       exchangeWith<MulticastHostMessage, MulticastClientMessage>(
-        new SharedWorker().port,
+        new SharedWorker(new URL("../multicast.ts", import.meta.url)).port,
       ),
       shareReplay({ refCount: false }),
     ),
