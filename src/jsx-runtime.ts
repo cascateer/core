@@ -25,21 +25,6 @@ declare global {
   namespace JSX {
     type Element = MaybeObservable<Node | Primitive>;
 
-    export type CSSCustomPropertyDefinition = Omit<PropertyDefinition, "name">;
-
-    export type CSSCustomIntegerPropertyDefinition =
-      CSSCustomPropertyDefinition & { syntax: "<integer>" };
-
-    export interface CSSCustomPropertyDefinitions extends Record<
-      keyof {},
-      CSSCustomPropertyDefinition
-    > {}
-
-    type CSSCustomProperties = Record<
-      keyof CSSCustomPropertyDefinitions & `--${string}`,
-      string | number
-    >;
-
     type Children = MaybeObservable<MaybeArray<Element>>;
 
     interface IntrinsicAttributes {
@@ -72,6 +57,21 @@ declare global {
     interface Component<P extends Props = Props> {
       (props: IntrinsicAttributes & P): Element;
     }
+
+    export type CSSCustomPropertyDefinition = Omit<PropertyDefinition, "name">;
+
+    export type CSSCustomIntegerPropertyDefinition =
+      CSSCustomPropertyDefinition & { syntax: "<integer>" };
+
+    export interface CSSCustomPropertyDefinitions extends Record<
+      keyof {},
+      CSSCustomPropertyDefinition
+    > {}
+
+    type CSSCustomProperties = Record<
+      keyof CSSCustomPropertyDefinitions & `--${string}`,
+      string | number
+    >;
   }
 }
 
