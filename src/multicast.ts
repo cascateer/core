@@ -21,7 +21,7 @@ declare global {
   }
 }
 
-const sliceActionsSequence = memoize(
+const memoizedSliceActions = memoize(
   <Seed>({ seed }: MulticastConnectMessageData<Seed>) =>
     transform<MulticastActionMessage<any>>((actions) =>
       actions.pipe(
@@ -63,7 +63,7 @@ self.addEventListener("connect", ({ ports }) => {
               flatMap((event) => {
                 if (event.type === "connect") {
                   actions.subscribe(
-                    sliceActions.completeWith(sliceActionsSequence(event.data)),
+                    sliceActions.completeWith(memoizedSliceActions(event.data)),
                   );
 
                   return [];

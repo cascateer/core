@@ -36,7 +36,7 @@ class SignalReflector<T> {
 export class Signal<T> extends Observable<T> implements TapObservable<T> {
   loading = of(false);
 
-  capture(): Signal<T> {
+  clone(): Signal<T> {
     return this;
   }
 

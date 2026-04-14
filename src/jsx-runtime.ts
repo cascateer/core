@@ -8,7 +8,7 @@ import {
   Observer,
   UnaryFunction,
 } from "rxjs";
-import { ObservableFragment, Primitive } from "./fragment";
+import { Leaf, ObservableFragment } from "./fragment";
 import { asArray, asObservable, keys } from "./lib";
 import { sequence } from "./operators";
 import {
@@ -23,7 +23,7 @@ type DocumentEventListener<EventName extends keyof DocumentEventMap> =
 
 declare global {
   namespace JSX {
-    type Element = MaybeObservable<Node | Primitive>;
+    type Element = MaybeObservable<Node | Leaf>;
 
     type Children = MaybeObservable<MaybeArray<Element>>;
 

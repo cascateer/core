@@ -36,7 +36,7 @@ export const asStoreEffects = <Signals extends Dictionary<ComputedSignal<any>>>(
   observer?: NextObserver<Signal<any>>,
 ): StoreEffects<Signals> =>
   mapValues(signals, (signal) =>
-    memoize(() => tap(signal.capture(), (value) => observer?.next(value))),
+    memoize(() => tap(signal.clone(), (value) => observer?.next(value))),
   );
 
 export class StoreAdapter<

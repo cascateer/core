@@ -15,7 +15,7 @@ import {
 import { asArray, asObservable } from "./lib";
 import { flatMap } from "./operators";
 
-export type Primitive =
+export type Leaf =
   | string
   | number
   | bigint
@@ -24,7 +24,7 @@ export type Primitive =
   | null
   | undefined;
 
-const isPrimitive = (value: unknown): value is Primitive =>
+const isLeaf = (value: unknown): value is Leaf =>
   ["string", "number", "bigint", "boolean", "symbol"].includes(typeof value) ||
   value == null;
 
@@ -102,9 +102,7 @@ export class ObservableFragment extends AnchorFragment {
                 element instanceof ObservableFragment
                   ? element.nodes
                   : of(
-                      isPrimitive(element)
-                        ? new Text(element?.toString())
-                        : element,
+                      isLeaf(element) ? new Text(element?.toString()) : element,
                     ),
               ),
               startWith(),
