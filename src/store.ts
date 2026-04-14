@@ -73,7 +73,7 @@ export class ExtendableStoreAdapter<
             },
             void
           >;
-          reflect: UnaryFunction<(args: any) => Promise<Transform<any>>, void>;
+          register: UnaryFunction<(args: any) => Transform<any>, void>;
         }
       >;
     },
@@ -145,8 +145,8 @@ export class ExtendableStoreAdapter<
                       (signal) => ({
                         update: (predicate, config = {}) =>
                           thru(this.context.transform(key), (transform) => {
-                            transform.reflect((args) =>
-                              signal.reflector.reflect(predicate(args)),
+                            transform.register((args) =>
+                              signal.reflector.predicate(predicate(args)),
                             );
 
                             return (args) =>
@@ -204,7 +204,7 @@ export class StoreProvider<Data> extends ExtendableStoreAdapter<
                 }
               ),
             ),
-          reflect: (transform) =>
+          register: (transform) =>
             actions
               .pipe(
                 mergeMap(async (event) => {
@@ -212,11 +212,11 @@ export class StoreProvider<Data> extends ExtendableStoreAdapter<
                     event.type === "transformAction" &&
                     event.data.key === (await key)
                   ) {
-                    return transform(event.data.args).then((predicate) => ({
+                    return {
                       ...event,
-                      predicate,
+                      predicate: transform(event.data.args),
                       callback: callbacks.get(event.id),
-                    }));
+                    };
                   }
 
                   return [];

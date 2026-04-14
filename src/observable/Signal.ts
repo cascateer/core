@@ -1,4 +1,4 @@
-import { clone, isEqual, memoize } from "lodash";
+import { clone, identity, isEqual, memoize } from "lodash";
 import { distinctUntilChanged, map, Observable, of, UnaryFunction } from "rxjs";
 import { TapObservable } from ".";
 import {
@@ -22,23 +22,15 @@ class SignalEnumerator<T> {
 
 class SignalReflector<T> {
   constructor(
-    private predicate: (
+    public predicate: (
       transform: Transform<T>,
-      callback: UnaryFunction<Transform<any>, void>,
-    ) => void = (transform, callback) => callback(transform),
+    ) => Transform<unknown> = identity,
   ) {}
 
-  reflect = (transform: Transform<T>) =>
-    new Promise<Transform<unknown>>((callback) =>
-      this.predicate(transform, callback),
-    );
-
-  lift = <U>(
+  reflect = <U>(
     lift: UnaryFunction<Transform<U>, Transform<T>>,
   ): SignalReflector<U> =>
-    new SignalReflector((transform, callback) =>
-      this.predicate(lift(transform), callback),
-    );
+    new SignalReflector((transform) => this.predicate(lift(transform)));
 }
 
 export class Signal<T> extends Observable<T> implements TapObservable<T> {
@@ -78,7 +70,7 @@ export class Signal<T> extends Observable<T> implements TapObservable<T> {
     return new Signal({
       value: this.pipe(map(project), distinctUntilChanged()),
       enumerator: new SignalEnumerator(enumerate),
-      reflector: this.reflector.lift(lift),
+      reflector: this.reflector.reflect(lift),
     });
   }
 
