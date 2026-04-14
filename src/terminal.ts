@@ -10,7 +10,7 @@ import {
 import { ApiAdapter, ApiEffect } from "./api";
 import { ExtendableDictionary } from "./lib";
 import { ComputedSignal, TapObservable } from "./observable";
-import { concat, transform } from "./operators";
+import { concat, proxy } from "./operators";
 import { asStoreEffects, StoreAdapter, StoreEffects } from "./store";
 import { Action, Effect, TapEffect } from "./types";
 
@@ -103,7 +103,7 @@ export class ExtendableTerminalAdapter<
         (currentEffects) => () =>
           effects({
             effect: (constructor) => {
-              const deps = transform<TapObservable<any>, boolean>((deps) =>
+              const deps = proxy<TapObservable<any>, boolean>((deps) =>
                 deps.pipe(
                   distinct(),
                   concat(),

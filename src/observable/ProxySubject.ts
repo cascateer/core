@@ -4,11 +4,14 @@ import {
   Observer,
   ReplaySubject,
   Subject,
-  UnaryFunction,
   Unsubscribable,
 } from "rxjs";
 
-export class TransformSubject<T, U = T>
+export interface ProxySubjectHandler<T, U> {
+  (target: Subject<T>, receiver: Observable<U>): Observable<U>;
+}
+
+export class ProxySubject<T, U = T>
   extends Observable<U>
   implements Observer<T>, Unsubscribable
 {
@@ -29,11 +32,11 @@ export class TransformSubject<T, U = T>
   }
 
   constructor(
-    project: UnaryFunction<Subject<T>, Observable<U>>,
+    handler: ProxySubjectHandler<T, U>,
     private target: Subject<T> = new ReplaySubject(),
   ) {
-    project = once(project);
+    handler = once(handler);
 
-    super((subscriber) => project(target).subscribe(subscriber));
+    super((subscriber) => handler(target, this).subscribe(subscriber));
   }
 }
