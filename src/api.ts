@@ -38,7 +38,7 @@ interface TagsConstructor<Args, Result> {
 
 interface MemoizableConfig<Args, Result> {
   predicate: UnaryFunction<Args, MaybeObservable<{ data: Result }>>;
-  tags: TagsConstructor<Args, Result> | MaybeArray<string>;
+  tags?: TagsConstructor<Args, Result> | MaybeArray<string>;
 }
 
 class Memoizable<Args, Result> {
@@ -52,7 +52,7 @@ class Memoizable<Args, Result> {
   constructor({ predicate, tags }: MemoizableConfig<Args, Result>) {
     this.predicate = (args) =>
       asObservable(predicate(args)).pipe(map(property("data")));
-    this.tags = isFunction(tags) ? tags : constant([tags].flat());
+    this.tags = isFunction(tags) ? tags : constant([tags ?? []].flat());
 
     this.subscribe = (invalidatedTags) => {
       const loading = new BehaviorSubject(false);
