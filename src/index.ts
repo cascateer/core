@@ -6,4 +6,4 @@ export { createElement, createFragment } from "./jsx-runtime";
 export { createSlice } from "./slice";
 export { type StoreEffect } from "./store";
 export { type TerminalEffect } from "./terminal";
-export { type Action, type Effect, type MaybeObservable } from "./types";
+export { type Action, type MaybeObservable } from "./types";
