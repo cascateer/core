@@ -1,6 +1,7 @@
 import { Dictionary, kebabCase } from "lodash";
 import { defer, share, UnaryFunction } from "rxjs";
 import { createFragment } from ".";
+import { ApiAdapter, ApiEffect } from "./api";
 import { cssStyleSheets } from "./css";
 import { defineCustomElement } from "./dom";
 import { ExtendableDictionary } from "./lib";
@@ -67,6 +68,8 @@ export class ComponentsAdapter<
 export class ExtendableComponentsAdapter<
   StoreSignals extends Dictionary<ComputedSignal<any>>,
   StoreActions extends Dictionary<Action<any, any>>,
+  ApiEffects extends Dictionary<ApiEffect<any, any>>,
+  ApiActions extends Dictionary<Action<any, any>>,
   TerminalEffects extends Dictionary<TerminalEffect<any, any>>,
   TerminalActions extends Dictionary<Action<any, any>>,
   Components extends Dictionary<ComponentConstructor<any>>,
@@ -78,6 +81,7 @@ export class ExtendableComponentsAdapter<
   constructor(
     public context: {
       store: StoreAdapter<StoreSignals, StoreActions>;
+      api: ApiAdapter<ApiEffects, ApiActions>;
       terminal: TerminalAdapter<TerminalEffects, TerminalActions>;
     },
     private extendableComponents: ExtendableDictionary<
@@ -97,6 +101,10 @@ export class ExtendableComponentsAdapter<
               store: {
                 effects: StoreEffects<StoreSignals>;
                 actions: StoreActions;
+              };
+              api: {
+                effects: ApiEffects;
+                actions: ApiActions;
               };
               terminal: {
                 effects: TerminalEffects;
@@ -121,6 +129,10 @@ export class ExtendableComponentsAdapter<
                   effects: asStoreEffects(this.context.store.signals),
                   actions: this.context.store.actions,
                 },
+                api: {
+                  effects: this.context.api.effects,
+                  actions: this.context.api.actions,
+                },
                 terminal: {
                   effects: this.context.terminal.effects,
                   actions: this.context.terminal.actions,
@@ -135,17 +147,22 @@ export class ExtendableComponentsAdapter<
 export class ComponentsProvider<
   StoreSignals extends Dictionary<ComputedSignal<any>>,
   StoreActions extends Dictionary<Action<any, any>>,
+  ApiEffects extends Dictionary<ApiEffect<any, any>>,
+  ApiActions extends Dictionary<Action<any, any>>,
   TerminalEffects extends Dictionary<TerminalEffect<any, any>>,
   TerminalActions extends Dictionary<Action<any, any>>,
 > extends ExtendableComponentsAdapter<
   StoreSignals,
   StoreActions,
+  ApiEffects,
+  ApiActions,
   TerminalEffects,
   TerminalActions,
   {}
 > {
   constructor(context: {
     store: StoreAdapter<StoreSignals, StoreActions>;
+    api: ApiAdapter<ApiEffects, ApiActions>;
     terminal: TerminalAdapter<TerminalEffects, TerminalActions>;
   }) {
     super(context, new ExtendableDictionary({}));

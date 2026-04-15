@@ -54,6 +54,8 @@ interface SliceConfig<
         new (): ComponentsProvider<
           StoreSignals,
           StoreActions,
+          ApiEffects,
+          ApiActions,
           TerminalEffects,
           TerminalActions
         >;
@@ -171,13 +173,15 @@ export class Slice<
                         class extends ComponentsProvider<
                           StoreSignals,
                           StoreActions,
+                          ApiEffects,
+                          ApiActions,
                           TerminalEffects,
                           TerminalActions
                         > {
                           constructor() {
                             super(context);
                           }
-                        })({ store: this.store, terminal: this.terminal }),
+                        })({ store: this.store, api, terminal: this.terminal }),
                     }).components,
                     (componentConstructor) =>
                       componentConstructor.predicate(key),

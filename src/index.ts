@@ -1,4 +1,4 @@
-export { ApiProvider } from "./api";
+export { ApiProvider, type ApiEffect } from "./api";
 export { App } from "./app";
 export { createComponent } from "./component";
 export { defineCustomProperties } from "./dom";
