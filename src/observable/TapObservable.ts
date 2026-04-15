@@ -5,7 +5,6 @@ import {
   map,
   MonoTypeOperatorFunction,
   Observable,
-  share,
 } from "rxjs";
 import { tapSubscription } from "../operators";
 
@@ -18,7 +17,7 @@ export class TapObservable<T> extends Observable<T> {
     const subscribed = new BehaviorSubject(false);
 
     const intercept: MonoTypeOperatorFunction<T> = once((source) =>
-      source.pipe(tapSubscription(subscribed), share()),
+      source.pipe(tapSubscription(subscribed)),
     );
 
     super((subscriber) => source.pipe(intercept).subscribe(subscriber));
