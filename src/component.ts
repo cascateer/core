@@ -130,7 +130,9 @@ export class ExtendableComponentsAdapter<
                   actions: this.context.store.actions,
                 },
                 api: {
-                  effects: this.context.api.effects,
+                  effects:
+                    (console.log(this.context.api.effects),
+                    this.context.api.effects),
                   actions: this.context.api.actions,
                 },
                 terminal: {
