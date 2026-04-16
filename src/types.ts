@@ -1,6 +1,7 @@
+import { Dictionary, mapValues, memoize, tap } from "lodash";
 import { UnaryFunction } from "rxjs";
 import { Observable } from "rxjs/internal/Observable";
-import { ObservableInput } from "rxjs/internal/types";
+import { NextObserver, ObservableInput } from "rxjs/internal/types";
 import { TapObservable } from "./observable";
 
 export interface Effect<Args, Result> extends UnaryFunction<
@@ -12,6 +13,27 @@ export interface TapEffect<Args, Result> extends UnaryFunction<
   Args,
   TapObservable<Result>
 > {}
+
+export type TapEffects<Effects extends Dictionary<TapEffect<any, any>>> = {
+  [K in keyof Effects]: ReturnType<
+    <
+      Args extends Effects[K] extends TapEffect<infer Args, infer _>
+        ? Args
+        : never,
+      Result extends Effects[K] extends TapEffect<infer _, infer Result>
+        ? Result
+        : never,
+    >() => TapEffect<Args, Result>
+  >;
+};
+
+export const asTapEffects = <Effects extends Dictionary<TapEffect<any, any>>>(
+  effects: Effects,
+  observer?: NextObserver<TapObservable<any>>,
+): TapEffects<Effects> =>
+  mapValues(effects, (effect) =>
+    memoize((args) => tap(effect(args), (source) => observer?.next(source))),
+  );
 
 export interface Action<Args, Result> extends UnaryFunction<
   Args,

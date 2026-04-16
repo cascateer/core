@@ -1,41 +1,13 @@
-import { Dictionary, mapValues, memoize, tap, thru } from "lodash";
-import {
-  combineLatest,
-  distinct,
-  map,
-  NextObserver,
-  switchMap,
-  UnaryFunction,
-} from "rxjs";
+import { Dictionary, thru } from "lodash";
+import { combineLatest, distinct, map, switchMap, UnaryFunction } from "rxjs";
 import { ApiAdapter, ApiEffect } from "./api";
 import { ExtendableDictionary } from "./lib";
 import { ComputedSignal, TapObservable } from "./observable";
 import { concat, proxyReplaySubject } from "./operators";
 import { asStoreEffects, StoreAdapter, StoreEffects } from "./store";
-import { Action, Effect, TapEffect } from "./types";
+import { Action, asTapEffects, Effect, TapEffect, TapEffects } from "./types";
 
 export interface TerminalEffect<Args, Result> extends TapEffect<Args, Result> {}
-
-type TerminalEffects<Effects extends Dictionary<TapEffect<any, any>>> = {
-  [K in keyof Effects]: ReturnType<
-    <
-      Args extends Effects[K] extends TapEffect<infer Args, infer _>
-        ? Args
-        : never,
-      Result extends Effects[K] extends TapEffect<infer _, infer Result>
-        ? Result
-        : never,
-    >() => TerminalEffect<Args, Result>
-  >;
-};
-
-const asTerminalEffects = <Effects extends Dictionary<TapEffect<any, any>>>(
-  effects: Effects,
-  observer?: NextObserver<TapObservable<any>>,
-): TerminalEffects<Effects> =>
-  mapValues(effects, (effect) =>
-    memoize((args) => tap(effect(args), (value) => observer?.next(value))),
-  );
 
 export class TerminalAdapter<
   Effects extends Dictionary<TerminalEffect<any, any>>,
@@ -84,10 +56,10 @@ export class ExtendableTerminalAdapter<
                 effects: StoreEffects<StoreSignals>;
               };
               api: {
-                effects: TerminalEffects<ApiEffects>;
+                effects: TapEffects<ApiEffects>;
               };
               terminal: {
-                effects: TerminalEffects<Effects>;
+                effects: TapEffects<Effects>;
               };
             },
             Effect<Args, Result>
@@ -121,10 +93,10 @@ export class ExtendableTerminalAdapter<
                     effects: asStoreEffects(this.context.store.signals, deps),
                   },
                   api: {
-                    effects: asTerminalEffects(this.context.api.effects, deps),
+                    effects: asTapEffects(this.context.api.effects, deps),
                   },
                   terminal: {
-                    effects: asTerminalEffects(currentEffects, deps),
+                    effects: asTapEffects(currentEffects, deps),
                   },
                 }),
                 (effect) => (args) => new TapObservable(effect(args), deps),
