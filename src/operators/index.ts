@@ -10,6 +10,6 @@ export {
   type MulticastHostMessage,
   type MulticastSubject,
 } from "./multicast";
-export { proxy } from "./proxy";
+export { proxyReplaySubject } from "./proxy";
 export { sequence } from "./sequence";
 export { tapSubscription } from "./tapSubscription";

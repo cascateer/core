@@ -1,5 +1,5 @@
 import { memoize, thru } from "lodash";
-import { mergeAll, Observable, ReplaySubject, startWith, tap } from "rxjs";
+import { mergeAll, Observable, startWith, tap } from "rxjs";
 import { v4 } from "uuid";
 import { nonNullable, property } from "./lib";
 import { Future } from "./observable";
@@ -9,7 +9,7 @@ import {
   MulticastActionMessage,
   MulticastClientMessage,
   MulticastConnectMessageData,
-  proxy,
+  proxyReplaySubject,
   sequence,
 } from "./operators";
 
@@ -23,7 +23,7 @@ declare global {
 
 const memoizedSliceActions = memoize(
   <Seed>({ seed }: MulticastConnectMessageData<Seed>) =>
-    proxy<MulticastActionMessage<any>>(new ReplaySubject(), (actions) =>
+    proxyReplaySubject<MulticastActionMessage<any>>((actions) =>
       actions.pipe(
         startWith({
           id: v4(),
@@ -42,8 +42,7 @@ self.addEventListener("connect", ({ ports }) => {
     thru(
       new Future<Observable<MulticastActionMessage<any>>>(),
       (sliceActions) =>
-        proxy<MulticastActionMessage<any>, MulticastClientMessage>(
-          new ReplaySubject(),
+        proxyReplaySubject<MulticastActionMessage<any>, MulticastClientMessage>(
           (actions) =>
             sliceActions.pipe(
               mergeAll(),

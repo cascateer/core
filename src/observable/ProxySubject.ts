@@ -31,6 +31,6 @@ export class ProxySubject<T, U = T>
   ) {
     handler = once(handler);
 
-    super((subscriber) => handler(target, this).subscribe(subscriber));
+    super((subscriber) => handler(this.target, this).subscribe(subscriber));
   }
 }
