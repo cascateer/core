@@ -56,7 +56,7 @@ class Memoizable<Args, Result> {
 
     this.subscribe = (invalidatedTags) => {
       const loading = new BehaviorSubject(false);
-      console.log(loading);
+
       const effect: Effect<Args, Result> = memoize(
         (args) =>
           this.predicate(args).pipe(
@@ -80,7 +80,10 @@ class Memoizable<Args, Result> {
         (args) => objectHash(args ?? null),
       );
 
-      return (args) => new TapObservable(effect(args), loading);
+      return (args) => (
+        console.log(loading),
+        new TapObservable(effect(args), loading)
+      );
     };
 
     this.share = (invalidatedTags) => (args) =>
