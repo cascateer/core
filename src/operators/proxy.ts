@@ -3,6 +3,6 @@ import { ProxySubject } from "../observable";
 import { ProxySubjectHandler } from "../observable/ProxySubject";
 
 export const proxy = <T, U = T>(
+  target: Subject<T>,
   handler: ProxySubjectHandler<T, U>,
-  target?: Subject<T>,
-) => new ProxySubject(handler, target);
+) => new ProxySubject(target, handler);

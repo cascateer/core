@@ -1,11 +1,5 @@
 import { once } from "lodash";
-import {
-  Observable,
-  Observer,
-  ReplaySubject,
-  Subject,
-  Unsubscribable,
-} from "rxjs";
+import { Observable, Observer, Subject, Unsubscribable } from "rxjs";
 
 export interface ProxySubjectHandler<T, U> {
   (target: Subject<T>, receiver: Observable<U>): Observable<U>;
@@ -32,8 +26,8 @@ export class ProxySubject<T, U = T>
   }
 
   constructor(
+    private target: Subject<T>,
     handler: ProxySubjectHandler<T, U>,
-    private target: Subject<T> = new ReplaySubject(),
   ) {
     handler = once(handler);
 

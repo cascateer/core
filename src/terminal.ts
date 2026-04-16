@@ -4,6 +4,7 @@ import {
   distinct,
   map,
   NextObserver,
+  ReplaySubject,
   switchMap,
   UnaryFunction,
 } from "rxjs";
@@ -103,15 +104,17 @@ export class ExtendableTerminalAdapter<
         (currentEffects) => () =>
           effects({
             effect: (constructor) => {
-              const deps = proxy<TapObservable<any>, boolean>((deps) =>
-                deps.pipe(
-                  distinct(),
-                  concat(),
-                  switchMap((dep) =>
-                    combineLatest(dep.map((dep) => dep.loading)),
+              const deps = proxy<TapObservable<any>, boolean>(
+                new ReplaySubject(),
+                (deps) =>
+                  deps.pipe(
+                    distinct(),
+                    concat(),
+                    switchMap((dep) =>
+                      combineLatest(dep.map((dep) => dep.loading)),
+                    ),
+                    map((values) => values.some(Boolean)),
                   ),
-                  map((values) => values.some(Boolean)),
-                ),
               );
 
               return thru(

@@ -1,4 +1,10 @@
-import { concatMap, shareReplay, startWith, UnaryFunction } from "rxjs";
+import {
+  concatMap,
+  ReplaySubject,
+  shareReplay,
+  startWith,
+  UnaryFunction,
+} from "rxjs";
 import { v4 } from "uuid";
 import { ComputedSignal, ProxySubject } from "../observable";
 import { exchangeWith, proxy } from "../operators";
@@ -80,7 +86,7 @@ export const multicast = <Seed>(
   key: Promise<string>,
   seed: Seed,
 ): MulticastSubject =>
-  proxy((messages) =>
+  proxy(new ReplaySubject(), (messages) =>
     messages.pipe(
       startWith(
         ({ key, id }): MulticastConnectMessage => ({

@@ -1,5 +1,5 @@
 import { memoize, thru } from "lodash";
-import { mergeAll, Observable, startWith, tap } from "rxjs";
+import { mergeAll, Observable, ReplaySubject, startWith, tap } from "rxjs";
 import { v4 } from "uuid";
 import { nonNullable, property } from "./lib";
 import { Future } from "./observable";
@@ -23,7 +23,7 @@ declare global {
 
 const memoizedSliceActions = memoize(
   <Seed>({ seed }: MulticastConnectMessageData<Seed>) =>
-    proxy<MulticastActionMessage<any>>((actions) =>
+    proxy<MulticastActionMessage<any>>(new ReplaySubject(), (actions) =>
       actions.pipe(
         startWith({
           id: v4(),
@@ -42,36 +42,38 @@ self.addEventListener("connect", ({ ports }) => {
     thru(
       new Future<Observable<MulticastActionMessage<any>>>(),
       (sliceActions) =>
-        proxy<MulticastActionMessage<any>, MulticastClientMessage>((actions) =>
-          sliceActions.pipe(
-            mergeAll(),
-            flatMap(({ origin, ...message }) =>
-              !message.sameOrigin || origin === port ? message : [],
-            ),
-            sequence(([action, previousAction]) =>
-              action.type === "seedAction"
-                ? action
-                : {
-                    ...action,
-                    previousId: nonNullable(previousAction).id,
-                  },
-            ),
-            exchangeWith<MulticastClientMessage, MulticastActionMessage<any>>(
-              port,
-            ),
-            flatMap((event) => {
-              if (event.type === "connect") {
-                actions.subscribe(
-                  sliceActions.completeWith(memoizedSliceActions(event.data)),
-                );
+        proxy<MulticastActionMessage<any>, MulticastClientMessage>(
+          new ReplaySubject(),
+          (actions) =>
+            sliceActions.pipe(
+              mergeAll(),
+              flatMap(({ origin, ...message }) =>
+                !message.sameOrigin || origin === port ? message : [],
+              ),
+              sequence(([action, previousAction]) =>
+                action.type === "seedAction"
+                  ? action
+                  : {
+                      ...action,
+                      previousId: nonNullable(previousAction).id,
+                    },
+              ),
+              exchangeWith<MulticastClientMessage, MulticastActionMessage<any>>(
+                port,
+              ),
+              flatMap((event) => {
+                if (event.type === "connect") {
+                  actions.subscribe(
+                    sliceActions.completeWith(memoizedSliceActions(event.data)),
+                  );
 
-                return [];
-              }
+                  return [];
+                }
 
-              return { ...event, origin: port };
-            }),
-            tap(actions),
-          ),
+                return { ...event, origin: port };
+              }),
+              tap(actions),
+            ),
         ),
     ).subscribe();
   }
