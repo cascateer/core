@@ -80,10 +80,7 @@ class Memoizable<Args, Result> {
         (args) => objectHash(args ?? null),
       );
 
-      return (args) => (
-        console.log(loading),
-        new TapObservable(effect(args), loading)
-      );
+      return (args) => new TapObservable(effect(args), loading);
     };
 
     this.share = (invalidatedTags) => (args) =>
