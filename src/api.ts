@@ -56,6 +56,7 @@ class Memoizable<Args, Result> {
 
     this.subscribe = (invalidatedTags) => {
       const loading = new BehaviorSubject(false);
+      console.log(loading);
       const effect: Effect<Args, Result> = memoize(
         (args) =>
           this.predicate(args).pipe(
