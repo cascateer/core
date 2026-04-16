@@ -8,7 +8,7 @@ export const tapSubscription =
     return source.pipe(
       tap({
         subscribe: () => observer?.next(++subscriptions > 0),
-        unsubscribe: () => observer?.next(--subscriptions === 0),
+        unsubscribe: () => observer?.next(--subscriptions > 0),
       }),
     );
   };
