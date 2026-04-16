@@ -4,4 +4,4 @@ import { ProxySubjectHandler } from "../observable/ProxySubject";
 
 export const proxyReplaySubject = <T, U = T>(
   handler: ProxySubjectHandler<T, U>,
-) => new ProxySubject(new ReplaySubject<T>(), handler);
+) => new ProxySubject<T, U>(new ReplaySubject(), handler);
