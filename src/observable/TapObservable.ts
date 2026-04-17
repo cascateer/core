@@ -1,11 +1,4 @@
-import {
-  BehaviorSubject,
-  combineLatest,
-  distinctUntilChanged,
-  map,
-  Observable,
-} from "rxjs";
-import { tapSubscription } from "../operators";
+import { BehaviorSubject, defer, finalize, Observable } from "rxjs";
 import { ProxyObservable } from "./ProxyObservable";
 
 export interface TapObservable<T> {
@@ -13,14 +6,15 @@ export interface TapObservable<T> {
 }
 
 export class TapObservable<T> extends ProxyObservable<T> {
-  constructor(source: Observable<T>, loading: Observable<boolean>) {
-    const subscribed = new BehaviorSubject(false);
+  constructor(source: Observable<T>) {
+    const loading = new BehaviorSubject(false);
 
-    super(source, (source) => source.pipe(tapSubscription(subscribed)));
-
-    this.loading = combineLatest([loading, subscribed]).pipe(
-      map((values) => values.every(Boolean)),
-      distinctUntilChanged(),
+    super(source, (source) =>
+      defer(() => (loading.next(true), source)).pipe(
+        finalize(() => loading.next(false)),
+      ),
     );
+
+    this.loading = loading;
   }
 }
