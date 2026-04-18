@@ -1,6 +1,6 @@
 import { clone, identity, isEqual, memoize } from "lodash";
 import { distinctUntilChanged, map, Observable, of, UnaryFunction } from "rxjs";
-import { TapObservable } from ".";
+import { AsyncObservable, ProxyObservable } from ".";
 import {
   asEnumerable,
   EnumerableItem,
@@ -33,8 +33,11 @@ class SignalReflector<T> {
     new SignalReflector((transform) => this.predicate(lift(transform)));
 }
 
-export class Signal<T> extends Observable<T> implements TapObservable<T> {
-  loading = of(false);
+export class Signal<T>
+  extends ProxyObservable<T>
+  implements AsyncObservable<T>
+{
+  pending = of(false);
 
   clone(): Signal<T> {
     return this;
@@ -56,7 +59,7 @@ export class Signal<T> extends Observable<T> implements TapObservable<T> {
     enumerator?: SignalEnumerator<T>;
     reflector?: SignalReflector<T>;
   }) {
-    super((subscriber) => value.subscribe(subscriber));
+    super(value);
 
     this.enumerator = enumerator;
     this.reflector = reflector;

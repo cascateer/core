@@ -1,13 +1,21 @@
-import { Dictionary, memoize, thru } from "lodash";
-import objectHash from "object-hash";
+import { Dictionary, thru } from "lodash";
 import { UnaryFunction } from "rxjs";
 import { ApiAdapter, ApiEffect } from "./api";
 import { ExtendableDictionary } from "./lib";
-import { ComputedSignal, TapObservable } from "./observable";
+import { ComputedSignal } from "./observable";
 import { asStoreEffects, StoreAdapter, StoreEffects } from "./store";
-import { Action, Effect, TapEffect, TapEffects } from "./types";
+import {
+  Action,
+  AsyncEffect,
+  AsyncEffectInterceptor,
+  AsyncEffects,
+  Effect,
+} from "./types";
 
-export interface TerminalEffect<Args, Result> extends TapEffect<Args, Result> {}
+export interface TerminalEffect<Args, Result> extends AsyncEffect<
+  Args,
+  Result
+> {}
 
 export class TerminalAdapter<
   Effects extends Dictionary<TerminalEffect<any, any>>,
@@ -56,10 +64,10 @@ export class ExtendableTerminalAdapter<
                 effects: StoreEffects<StoreSignals>;
               };
               api: {
-                effects: TapEffects<ApiEffects>;
+                effects: AsyncEffects<ApiEffects>;
               };
               terminal: {
-                effects: TapEffects<Effects>;
+                effects: AsyncEffects<Effects>;
               };
             },
             Effect<Args, Result>
@@ -75,23 +83,21 @@ export class ExtendableTerminalAdapter<
         (currentEffects) => () =>
           effects({
             effect: (constructor) => {
+              const interceptor = new AsyncEffectInterceptor();
+
               return thru(
                 constructor({
                   store: {
                     effects: asStoreEffects(this.context.store.signals),
                   },
                   api: {
-                    effects: this.context.api.effects,
+                    effects: interceptor.intercept(this.context.api.effects),
                   },
                   terminal: {
-                    effects: currentEffects,
+                    effects: interceptor.intercept(currentEffects),
                   },
                 }),
-                (effect) =>
-                  memoize(
-                    (args) => new TapObservable(effect(args)),
-                    (args) => objectHash(args ?? null),
-                  ),
+                interceptor.toAsyncEffect,
               );
             },
           }),

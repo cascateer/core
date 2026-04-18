@@ -20,8 +20,8 @@ import {
   UnaryFunction,
 } from "rxjs";
 import { asObservable, ExtendableDictionary, property } from "./lib";
-import { TapObservable } from "./observable";
-import { Action, MaybeArray, MaybeObservable, TapEffect } from "./types";
+import { AsyncObservable } from "./observable";
+import { Action, AsyncEffect, MaybeArray, MaybeObservable } from "./types";
 
 interface TagsConstructor<Args, Result> {
   (args: Args, result: Result): string[];
@@ -36,7 +36,7 @@ class Memoizable<Args, Result> {
   predicate: UnaryFunction<Args, Observable<Result>>;
   tags: TagsConstructor<Args, Result>;
 
-  subscribe: UnaryFunction<Observable<string[]>, TapEffect<Args, Result>>;
+  subscribe: UnaryFunction<Observable<string[]>, AsyncEffect<Args, Result>>;
 
   share: UnaryFunction<NextObserver<string[]>, Action<Args, Result>>;
 
@@ -46,9 +46,9 @@ class Memoizable<Args, Result> {
     this.tags = isFunction(tags) ? tags : constant([tags ?? []].flat());
 
     this.subscribe = (invalidatedTags) => {
-      const memoizedEffect: TapEffect<Args, Result> = memoize(
+      const memoizedEffect: AsyncEffect<Args, Result> = memoize(
         (args) =>
-          new TapObservable(
+          new AsyncObservable(
             this.predicate(args).pipe(
               repeat({
                 delay: () =>
@@ -79,7 +79,7 @@ class Memoizable<Args, Result> {
   }
 }
 
-export interface ApiEffect<Args, Result> extends TapEffect<Args, Result> {}
+export interface ApiEffect<Args, Result> extends AsyncEffect<Args, Result> {}
 
 type ApiAdapterPropertyConstructor<Source, Type extends "effect" | "action"> = {
   [T in Type]: <Args, Result>(
