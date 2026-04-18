@@ -1,4 +1,5 @@
-import { Dictionary, thru } from "lodash";
+import { Dictionary, memoize, thru } from "lodash";
+import objectHash from "object-hash";
 import { UnaryFunction } from "rxjs";
 import { ApiAdapter, ApiEffect } from "./api";
 import { ExtendableDictionary } from "./lib";
@@ -86,7 +87,11 @@ export class ExtendableTerminalAdapter<
                     effects: currentEffects,
                   },
                 }),
-                (effect) => (args) => new TapObservable(effect(args)),
+                (effect) =>
+                  memoize(
+                    (args) => new TapObservable(effect(args)),
+                    (args) => objectHash(args ?? null),
+                  ),
               );
             },
           }),
