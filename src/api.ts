@@ -8,7 +8,6 @@ import {
 } from "lodash";
 import objectHash from "object-hash";
 import {
-  BehaviorSubject,
   combineLatest,
   filter,
   lastValueFrom,
@@ -18,19 +17,11 @@ import {
   repeat,
   shareReplay,
   Subject,
-  tap,
   UnaryFunction,
 } from "rxjs";
 import { asObservable, ExtendableDictionary, property } from "./lib";
 import { TapObservable } from "./observable";
-import { tapSubscription } from "./operators";
-import {
-  Action,
-  Effect,
-  MaybeArray,
-  MaybeObservable,
-  TapEffect,
-} from "./types";
+import { Action, MaybeArray, MaybeObservable, TapEffect } from "./types";
 
 interface TagsConstructor<Args, Result> {
   (args: Args, result: Result): string[];
@@ -55,36 +46,30 @@ class Memoizable<Args, Result> {
     this.tags = isFunction(tags) ? tags : constant([tags ?? []].flat());
 
     this.subscribe = (invalidatedTags) => {
-      const loading = new BehaviorSubject(false);
-
-      const resolver = (args: Args) => objectHash(args ?? null);
-      const effect: Effect<Args, Result> = memoize(
+      const memoizedEffect: TapEffect<Args, Result> = memoize(
         (args) =>
-          this.predicate(args).pipe(
-            tapSubscription(loading),
-            tap({
-              complete: () => loading.next(false),
-            }),
-            repeat({
-              delay: () =>
-                combineLatest([
-                  effect(args).pipe(map((result) => this.tags(args, result))),
-                  invalidatedTags,
-                ]).pipe(
-                  filter(([tags, invalidatedTags]) =>
-                    isEqual(tags, intersectionWith(tags, invalidatedTags)),
+          new TapObservable(
+            this.predicate(args).pipe(
+              repeat({
+                delay: () =>
+                  combineLatest([
+                    memoizedEffect(args).pipe(
+                      map((result) => this.tags(args, result)),
+                    ),
+                    invalidatedTags,
+                  ]).pipe(
+                    filter(([tags, invalidatedTags]) =>
+                      isEqual(tags, intersectionWith(tags, invalidatedTags)),
+                    ),
                   ),
-                ),
-            }),
-            shareReplay({ bufferSize: 1, refCount: false }),
+              }),
+              shareReplay({ bufferSize: 1, refCount: false }),
+            ),
           ),
-        resolver,
+        (args) => objectHash(args ?? null),
       );
 
-      return memoize(
-        (args) => new TapObservable(effect(args), loading),
-        resolver,
-      );
+      return memoizedEffect;
     };
 
     this.share = (invalidatedTags) => (args) =>

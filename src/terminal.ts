@@ -1,12 +1,10 @@
-import { Dictionary, memoize, thru } from "lodash";
-import objectHash from "object-hash";
-import { combineLatest, distinct, map, switchMap, UnaryFunction } from "rxjs";
+import { Dictionary, thru } from "lodash";
+import { UnaryFunction } from "rxjs";
 import { ApiAdapter, ApiEffect } from "./api";
 import { ExtendableDictionary } from "./lib";
 import { ComputedSignal, TapObservable } from "./observable";
-import { concat, proxyReplaySubject } from "./operators";
 import { asStoreEffects, StoreAdapter, StoreEffects } from "./store";
-import { Action, asTapEffects, Effect, TapEffect, TapEffects } from "./types";
+import { Action, Effect, TapEffect, TapEffects } from "./types";
 
 export interface TerminalEffect<Args, Result> extends TapEffect<Args, Result> {}
 
@@ -76,35 +74,19 @@ export class ExtendableTerminalAdapter<
         (currentEffects) => () =>
           effects({
             effect: (constructor) => {
-              const deps = proxyReplaySubject<TapObservable<any>, boolean>(
-                (deps) =>
-                  deps.pipe(
-                    distinct(),
-                    concat(),
-                    switchMap((dep) =>
-                      combineLatest(dep.map((dep) => dep.loading)),
-                    ),
-                    map((values) => values.some(Boolean)),
-                  ),
-              );
-
               return thru(
                 constructor({
                   store: {
-                    effects: asStoreEffects(this.context.store.signals, deps),
+                    effects: asStoreEffects(this.context.store.signals),
                   },
                   api: {
-                    effects: asTapEffects(this.context.api.effects, deps),
+                    effects: this.context.api.effects,
                   },
                   terminal: {
-                    effects: asTapEffects(currentEffects, deps),
+                    effects: currentEffects,
                   },
                 }),
-                (effect) =>
-                  memoize(
-                    (args) => new TapObservable(effect(args), deps),
-                    (args) => objectHash(args ?? null),
-                  ),
+                (effect) => (args) => new TapObservable(effect(args)),
               );
             },
           }),

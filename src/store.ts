@@ -1,9 +1,8 @@
-import { constant, Dictionary, mapValues, memoize, tap, thru } from "lodash";
+import { constant, Dictionary, mapValues, tap, thru } from "lodash";
 import {
   identity,
   merge,
   mergeMap,
-  NextObserver,
   Observable,
   ReplaySubject,
   shareReplay,
@@ -33,11 +32,8 @@ export type StoreEffects<Signals extends Dictionary<ComputedSignal<any>>> = {
 
 export const asStoreEffects = <Signals extends Dictionary<ComputedSignal<any>>>(
   signals: Signals,
-  observer?: NextObserver<Signal<any>>,
 ): StoreEffects<Signals> =>
-  mapValues(signals, (signal) =>
-    memoize(() => tap(signal.clone(), (value) => observer?.next(value))),
-  );
+  mapValues(signals, (signal) => () => signal.clone());
 
 export class StoreAdapter<
   Signals extends Dictionary<ComputedSignal<any>>,
