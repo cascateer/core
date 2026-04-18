@@ -46,14 +46,16 @@ class Memoizable<Args, Result> {
     this.tags = isFunction(tags) ? tags : constant([tags ?? []].flat());
 
     this.subscribe = (invalidatedTags) => {
-      const effect: TapEffect<Args, Result> = memoize(
+      const memoizedEffect: TapEffect<Args, Result> = memoize(
         (args) =>
           new TapObservable(
             this.predicate(args).pipe(
               repeat({
                 delay: () =>
                   combineLatest([
-                    effect(args).pipe(map((result) => this.tags(args, result))),
+                    memoizedEffect(args).pipe(
+                      map((result) => this.tags(args, result)),
+                    ),
                     invalidatedTags,
                   ]).pipe(
                     filter(([tags, invalidatedTags]) =>
@@ -67,7 +69,7 @@ class Memoizable<Args, Result> {
         (args) => objectHash(args ?? null),
       );
 
-      return effect;
+      return memoizedEffect;
     };
 
     this.share = (invalidatedTags) => (args) =>
