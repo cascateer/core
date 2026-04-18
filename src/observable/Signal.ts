@@ -59,7 +59,7 @@ export class Signal<T>
     enumerator?: SignalEnumerator<T>;
     reflector?: SignalReflector<T>;
   }) {
-    super(value);
+    super(value, identity);
 
     this.enumerator = enumerator;
     this.reflector = reflector;

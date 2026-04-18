@@ -1,12 +1,8 @@
-import { once } from "lodash";
-import { Observable, Observer, Subject, Unsubscribable } from "rxjs";
-
-export interface ProxySubjectHandler<T, U> {
-  (target: Subject<T>, receiver: Observable<U>): Observable<U>;
-}
+import { Observer, Subject, Unsubscribable } from "rxjs";
+import { ProxyObservable, ProxyObservableHandler } from "./ProxyObservable";
 
 export class ProxySubject<T, U = T>
-  extends Observable<U>
+  extends ProxyObservable<T, U>
   implements Observer<T>, Unsubscribable
 {
   next(value: T): void {
@@ -27,10 +23,8 @@ export class ProxySubject<T, U = T>
 
   constructor(
     private target: Subject<T>,
-    handler: ProxySubjectHandler<T, U>,
+    handler: ProxyObservableHandler<T, U>,
   ) {
-    handler = once(handler);
-
-    super((subscriber) => handler(target, this).subscribe(subscriber));
+    super(target, handler);
   }
 }

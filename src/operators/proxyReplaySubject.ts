@@ -1,7 +1,7 @@
 import { ReplaySubject } from "rxjs";
 import { ProxySubject } from "../observable";
-import { ProxySubjectHandler } from "../observable/ProxySubject";
+import { ProxyObservableHandler } from "../observable/ProxyObservable";
 
 export const proxyReplaySubject = <T, U = T>(
-  handler: ProxySubjectHandler<T, U>,
+  handler: ProxyObservableHandler<T, U>,
 ) => new ProxySubject<T, U>(new ReplaySubject(), handler);

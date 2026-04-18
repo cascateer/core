@@ -2,6 +2,7 @@ import { Dictionary, mapValues, tap } from "lodash";
 import {
   combineLatest,
   distinct,
+  identity,
   map,
   ReplaySubject,
   switchMap,
@@ -56,7 +57,7 @@ export class AsyncEffectInterceptor extends ReplaySubject<
         pending: Observable<boolean>;
 
         constructor(interceptor: AsyncEffectInterceptor) {
-          super(effect(args));
+          super(effect(args), identity);
 
           this.pending = interceptor.pipe(
             distinct(),

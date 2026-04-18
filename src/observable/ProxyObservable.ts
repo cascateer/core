@@ -1,17 +1,14 @@
 import { once } from "lodash";
-import { identity, Observable } from "rxjs";
+import { Observable } from "rxjs";
 
-export interface ProxyObservableHandler<T> {
-  (target: Observable<T>, receiver: Observable<T>): Observable<T>;
+export interface ProxyObservableHandler<T, U> {
+  (target: Observable<T>): Observable<U>;
 }
 
-export class ProxyObservable<T> extends Observable<T> {
-  constructor(
-    target: Observable<T>,
-    handler: ProxyObservableHandler<T> = identity,
-  ) {
+export class ProxyObservable<T, U = T> extends Observable<U> {
+  constructor(target: Observable<T>, handler: ProxyObservableHandler<T, U>) {
     handler = once(handler);
 
-    super((subscriber) => handler(target, this).subscribe(subscriber));
+    super((subscriber) => handler(target).subscribe(subscriber));
   }
 }
