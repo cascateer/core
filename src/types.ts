@@ -1,5 +1,4 @@
-import { Dictionary, mapValues, memoize, tap } from "lodash";
-import objectHash from "object-hash";
+import { Dictionary, mapValues, tap } from "lodash";
 import {
   combineLatest,
   distinct,
@@ -43,11 +42,9 @@ export class AsyncEffectInterceptor extends ReplaySubject<
   intercept<Effects extends Dictionary<AsyncEffect<any, any>>>(
     effects: Effects,
   ): AsyncEffects<Effects> {
-    return mapValues(effects, (effect) =>
-      memoize(
-        (args) => tap(effect(args), (source) => this.next(source)),
-        (args) => objectHash(args ?? null),
-      ),
+    return mapValues(
+      effects,
+      (effect) => (args) => tap(effect(args), (source) => this.next(source)),
     );
   }
 
