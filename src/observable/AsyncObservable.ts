@@ -11,7 +11,7 @@ export class AsyncObservable<T> extends ProxyObservable<T> {
 
     super(source, (source) =>
       defer(() => (pending.next(true), source)).pipe(
-        finalize(() => pending.next(false)),
+        finalize(() => (console.log("pending = false") pending.next(false))),
       ),
     );
 

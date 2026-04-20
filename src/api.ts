@@ -17,7 +17,6 @@ import {
   repeat,
   shareReplay,
   Subject,
-  tap,
   UnaryFunction,
 } from "rxjs";
 import { asObservable, ExtendableDictionary, property } from "./lib";
@@ -51,7 +50,6 @@ class Memoizable<Args, Result> {
         (args) =>
           new AsyncObservable(
             this.predicate(args).pipe(
-              tap({ complete: () => console.log("complete") }),
               repeat({
                 delay: () =>
                   combineLatest([
