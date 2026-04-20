@@ -1,4 +1,4 @@
-import { Dictionary, thru } from "lodash";
+import { Dictionary } from "lodash";
 import { UnaryFunction } from "rxjs";
 import { ApiAdapter, ApiEffect } from "./api";
 import { ExtendableDictionary } from "./lib";
@@ -79,29 +79,25 @@ export class ExtendableTerminalAdapter<
   ) {
     return new ExtendableTerminalAdapter(
       this.context,
-      this.extendableEffects.extend(
-        (currentEffects) => () =>
-          effects({
-            effect: (constructor) => {
-              const interceptor = new AsyncEffectInterceptor();
+      this.extendableEffects.extend((currentEffects) => () => {
+        const interceptor = new AsyncEffectInterceptor();
+        const source = {
+          store: {
+            effects: asStoreEffects(this.context.store.signals),
+          },
+          api: {
+            effects: interceptor.intercept(this.context.api.effects),
+          },
+          terminal: {
+            effects: interceptor.intercept(currentEffects),
+          },
+        };
 
-              return thru(
-                constructor({
-                  store: {
-                    effects: asStoreEffects(this.context.store.signals),
-                  },
-                  api: {
-                    effects: interceptor.intercept(this.context.api.effects),
-                  },
-                  terminal: {
-                    effects: interceptor.intercept(currentEffects),
-                  },
-                }),
-                interceptor.toAsyncEffect,
-              );
-            },
-          }),
-      ),
+        return effects({
+          effect: (constructor) =>
+            interceptor.toAsyncEffect(constructor(source)),
+        });
+      }),
       this.extendableActions,
     );
   }

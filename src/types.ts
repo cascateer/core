@@ -39,17 +39,19 @@ export type AsyncEffects<Effects extends Dictionary<AsyncEffect<any, any>>> = {
 export class AsyncEffectInterceptor extends ReplaySubject<
   AsyncObservable<any>
 > {
-  intercept = <Effects extends Dictionary<AsyncEffect<any, any>>>(
+  intercept<Effects extends Dictionary<AsyncEffect<any, any>>>(
     effects: Effects,
-  ): AsyncEffects<Effects> =>
-    mapValues(
+  ): AsyncEffects<Effects> {
+    return mapValues(
       effects,
       (effect) => (args) => tap(effect(args), (source) => this.next(source)),
     );
+  }
 
-  toAsyncEffect =
-    <Args, Result>(effect: Effect<Args, Result>): AsyncEffect<Args, Result> =>
-    (args) =>
+  toAsyncEffect<Args, Result>(
+    effect: Effect<Args, Result>,
+  ): AsyncEffect<Args, Result> {
+    return (args) =>
       new (class
         extends ProxyObservable<Result>
         implements AsyncObservable<Result>
@@ -69,6 +71,7 @@ export class AsyncEffectInterceptor extends ReplaySubject<
           );
         }
       })(this);
+  }
 }
 
 export interface Action<Args, Result> extends UnaryFunction<

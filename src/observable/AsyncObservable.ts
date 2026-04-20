@@ -1,4 +1,12 @@
-import { BehaviorSubject, defer, finalize, Observable } from "rxjs";
+import { constant } from "lodash";
+import {
+  BehaviorSubject,
+  defer,
+  finalize,
+  isObservable,
+  Observable,
+  UnaryFunction,
+} from "rxjs";
 import { ProxyObservable } from "./ProxyObservable";
 
 export interface AsyncObservable<T> {
@@ -6,13 +14,18 @@ export interface AsyncObservable<T> {
 }
 
 export class AsyncObservable<T> extends ProxyObservable<T> {
-  constructor(source: Observable<T>) {
+  constructor(
+    source: Observable<T> | UnaryFunction<() => void, Observable<T>>,
+  ) {
     const pending = new BehaviorSubject(false);
+    const complete = () => pending.next(false);
 
-    super(source, (source) =>
-      defer(() => (pending.next(true), source)).pipe(
-        finalize(() => (console.log("pending = false"), pending.next(false))),
-      ),
+    if (isObservable(source)) {
+      source = constant(source);
+    }
+
+    super(source(complete), (source) =>
+      defer(() => (pending.next(true), source)).pipe(finalize(complete)),
     );
 
     this.pending = pending;

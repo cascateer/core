@@ -10,6 +10,7 @@ import objectHash from "object-hash";
 import {
   combineLatest,
   filter,
+  finalize,
   lastValueFrom,
   map,
   NextObserver,
@@ -48,8 +49,9 @@ class Memoizable<Args, Result> {
     this.subscribe = (invalidatedTags) => {
       const memoizedEffect: AsyncEffect<Args, Result> = memoize(
         (args) =>
-          new AsyncObservable(
+          new AsyncObservable((complete) =>
             this.predicate(args).pipe(
+              finalize(complete),
               repeat({
                 delay: () =>
                   combineLatest([
