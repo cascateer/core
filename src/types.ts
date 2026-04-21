@@ -54,26 +54,29 @@ export class AsyncEffectInterceptor extends ReplaySubject<
   toAsyncEffect<Args, Result>(
     effect: Effect<Args, Result>,
   ): AsyncEffect<Args, Result> {
-    return (args) =>
-      new (class
-        extends ProxyObservable<Result>
-        implements AsyncObservable<Result>
-      {
-        pending: Observable<boolean>;
+    return memoize(
+      (args) =>
+        new (class
+          extends ProxyObservable<Result>
+          implements AsyncObservable<Result>
+        {
+          pending: Observable<boolean>;
 
-        constructor(interceptor: AsyncEffectInterceptor) {
-          super(effect(args), identity);
+          constructor(interceptor: AsyncEffectInterceptor) {
+            super(effect(args), identity);
 
-          this.pending = interceptor.pipe(
-            distinct(),
-            concat(),
-            switchMap((sources) =>
-              combineLatest(sources.map((source) => source.pending)),
-            ),
-            map((values) => values.some(Boolean)),
-          );
-        }
-      })(this);
+            this.pending = interceptor.pipe(
+              distinct(),
+              concat(),
+              switchMap((sources) =>
+                combineLatest(sources.map((source) => source.pending)),
+              ),
+              map((values) => values.some(Boolean)),
+            );
+          }
+        })(this),
+      (args) => objectHash(args ?? null),
+    );
   }
 }
 
