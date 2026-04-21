@@ -51,7 +51,7 @@ class Memoizable<Args, Result> {
         (args) =>
           new AsyncObservable((complete) =>
             this.predicate(args).pipe(
-              finalize(() => (console.log("completed"), complete())),
+              finalize(complete),
               repeat({
                 delay: () =>
                   combineLatest([

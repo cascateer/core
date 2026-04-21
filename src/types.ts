@@ -1,5 +1,4 @@
-import { Dictionary, mapValues, memoize, tap } from "lodash";
-import objectHash from "object-hash";
+import { Dictionary, mapValues, tap } from "lodash";
 import {
   combineLatest,
   distinct,
@@ -43,40 +42,35 @@ export class AsyncEffectInterceptor extends ReplaySubject<
   intercept<Effects extends Dictionary<AsyncEffect<any, any>>>(
     effects: Effects,
   ): AsyncEffects<Effects> {
-    return mapValues(effects, (effect) =>
-      memoize(
-        (args) => tap(effect(args), (source) => this.next(source)),
-        (args) => objectHash(args ?? null),
-      ),
+    return mapValues(
+      effects,
+      (effect) => (args) => tap(effect(args), (source) => this.next(source)),
     );
   }
 
   toAsyncEffect<Args, Result>(
     effect: Effect<Args, Result>,
   ): AsyncEffect<Args, Result> {
-    return memoize(
-      (args) =>
-        new (class
-          extends ProxyObservable<Result>
-          implements AsyncObservable<Result>
-        {
-          pending: Observable<boolean>;
+    return (args) =>
+      new (class
+        extends ProxyObservable<Result>
+        implements AsyncObservable<Result>
+      {
+        pending: Observable<boolean>;
 
-          constructor(interceptor: AsyncEffectInterceptor) {
-            super(effect(args), identity);
+        constructor(interceptor: AsyncEffectInterceptor) {
+          super(effect(args), identity);
 
-            this.pending = interceptor.pipe(
-              distinct(),
-              concat(),
-              switchMap((sources) =>
-                combineLatest(sources.map((source) => source.pending)),
-              ),
-              map((values) => values.some(Boolean)),
-            );
-          }
-        })(this),
-      (args) => objectHash(args ?? null),
-    );
+          this.pending = interceptor.pipe(
+            distinct(),
+            concat(),
+            switchMap((sources) =>
+              combineLatest(sources.map((source) => source.pending)),
+            ),
+            map((values) => values.some(Boolean)),
+          );
+        }
+      })(this);
   }
 }
 

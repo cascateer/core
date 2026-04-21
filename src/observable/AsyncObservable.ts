@@ -7,12 +7,13 @@ import {
   Observable,
   UnaryFunction,
 } from "rxjs";
+import { ProxyObservable } from "./ProxyObservable";
 
 export interface AsyncObservable<T> {
   pending: Observable<boolean>;
 }
 
-export class AsyncObservable<T> extends Observable<T> {
+export class AsyncObservable<T> extends ProxyObservable<T> {
   constructor(
     source: Observable<T> | UnaryFunction<() => void, Observable<T>>,
   ) {
@@ -23,10 +24,8 @@ export class AsyncObservable<T> extends Observable<T> {
       source = constant(source);
     }
 
-    super((subscriber) =>
-      defer(() => (pending.next(true), source(complete)))
-        .pipe(finalize(complete))
-        .subscribe(subscriber),
+    super(source(complete), (source) =>
+      defer(() => (pending.next(true), source)).pipe(finalize(complete)),
     );
 
     this.pending = pending;
