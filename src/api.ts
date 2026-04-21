@@ -8,6 +8,7 @@ import {
 } from "lodash";
 import objectHash from "object-hash";
 import {
+  BehaviorSubject,
   combineLatest,
   filter,
   finalize,
@@ -48,26 +49,51 @@ class Memoizable<Args, Result> {
 
     this.subscribe = (invalidatedTags) => {
       const memoizedEffect: AsyncEffect<Args, Result> = memoize(
-        (args) =>
-          new AsyncObservable((complete) =>
-            this.predicate(args).pipe(
-              finalize(complete),
-              repeat({
-                delay: () =>
-                  combineLatest([
-                    memoizedEffect(args).pipe(
-                      map((result) => this.tags(args, result)),
-                    ),
-                    invalidatedTags,
-                  ]).pipe(
-                    filter(([tags, invalidatedTags]) =>
-                      isEqual(tags, intersectionWith(tags, invalidatedTags)),
-                    ),
-                  ),
-              }),
-              shareReplay({ bufferSize: 1, refCount: false }),
-            ),
-          ),
+        (args) => {
+          const pending = new BehaviorSubject(false);
+
+          return new (class
+            extends Observable<Result>
+            implements AsyncObservable<Result>
+          {
+            pending: Observable<boolean>;
+
+            constructor(
+              source: Observable<Result>,
+              tags: TagsConstructor<Args, Result>,
+            ) {
+              super(
+                (subscriber) => (
+                  pending.next(true),
+                  source
+                    .pipe(
+                      finalize(() => pending.next(false)),
+                      repeat({
+                        delay: () =>
+                          combineLatest([
+                            memoizedEffect(args).pipe(
+                              map((result) => tags(args, result)),
+                            ),
+                            invalidatedTags,
+                          ]).pipe(
+                            filter(([tags, invalidatedTags]) =>
+                              isEqual(
+                                tags,
+                                intersectionWith(tags, invalidatedTags),
+                              ),
+                            ),
+                          ),
+                      }),
+                      shareReplay({ bufferSize: 1, refCount: false }),
+                    )
+                    .subscribe(subscriber)
+                ),
+              );
+
+              this.pending = pending;
+            }
+          })(this.predicate(args), this.tags);
+        },
         (args) => objectHash(args ?? null),
       );
 
