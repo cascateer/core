@@ -10,6 +10,7 @@ import objectHash from "object-hash";
 import {
   BehaviorSubject,
   combineLatest,
+  defer,
   filter,
   finalize,
   lastValueFrom,
@@ -62,11 +63,11 @@ class Memoizable<Args, Result> {
               source: Observable<Result>,
               tags: TagsConstructor<Args, Result>,
             ) {
-              super(
-                (subscriber) => (
-                  pending.next(true),
-                  source
-                    .pipe(
+              super((subscriber) =>
+                defer(
+                  () => (
+                    pending.next(true),
+                    source.pipe(
                       finalize(() => pending.next(false)),
                       repeat({
                         delay: () =>
@@ -86,8 +87,8 @@ class Memoizable<Args, Result> {
                       }),
                       shareReplay({ bufferSize: 1, refCount: false }),
                     )
-                    .subscribe(subscriber)
-                ),
+                  ),
+                ).subscribe(subscriber),
               );
 
               this.pending = pending;
