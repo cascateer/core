@@ -1,8 +1,8 @@
 import { Observer, Subject, Unsubscribable } from "rxjs";
 import { ProxyObservable, ProxyObservableHandler } from "./ProxyObservable";
 
-export class ProxySubject<T, U = T>
-  extends ProxyObservable<T, U>
+export class ProxySubject<T, R = T>
+  extends ProxyObservable<T, R>
   implements Observer<T>, Unsubscribable
 {
   next(value: T): void {
@@ -23,7 +23,7 @@ export class ProxySubject<T, U = T>
 
   constructor(
     private target: Subject<T>,
-    handler: ProxyObservableHandler<T, U>,
+    handler: ProxyObservableHandler<T, R>,
   ) {
     super(target, handler);
   }
