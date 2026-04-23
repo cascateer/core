@@ -1,5 +1,5 @@
 import { once } from "lodash";
-import { Observable } from "rxjs";
+import { Observable, of } from "rxjs";
 
 export interface ProxyObservableHandler<T, U> {
   (target: Observable<T>): Observable<U>;
@@ -11,7 +11,7 @@ export class ProxyObservable<T, U = T> extends Observable<U> {
   constructor(
     target: Observable<T>,
     handler: ProxyObservableHandler<T, U>,
-    pending: Observable<boolean>,
+    pending = of(false),
   ) {
     handler = once(handler);
 

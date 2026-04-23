@@ -1,5 +1,5 @@
 import { clone, identity, isEqual, memoize } from "lodash";
-import { distinctUntilChanged, map, Observable, of, UnaryFunction } from "rxjs";
+import { distinctUntilChanged, map, Observable, UnaryFunction } from "rxjs";
 import { ProxyObservable } from ".";
 import {
   asEnumerable,
@@ -54,7 +54,7 @@ export class Signal<T> extends ProxyObservable<T> {
     enumerator?: SignalEnumerator<T>;
     reflector?: SignalReflector<T>;
   }) {
-    super(value, identity, of(false));
+    super(value, identity);
 
     this.enumerator = enumerator;
     this.reflector = reflector;
