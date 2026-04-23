@@ -6,13 +6,13 @@ import { ComputedSignal } from "./observable";
 import { asStoreEffects, StoreAdapter, StoreEffects } from "./store";
 import {
   Action,
-  AsyncEffect,
-  AsyncEffectInterceptor,
-  AsyncEffects,
   Effect,
+  ProxyEffect,
+  ProxyEffectInterceptor,
+  ProxyEffects,
 } from "./types";
 
-export interface TerminalEffect<Args, Result> extends AsyncEffect<
+export interface TerminalEffect<Args, Result> extends ProxyEffect<
   Args,
   Result
 > {}
@@ -64,10 +64,10 @@ export class ExtendableTerminalAdapter<
                 effects: StoreEffects<StoreSignals>;
               };
               api: {
-                effects: AsyncEffects<ApiEffects>;
+                effects: ProxyEffects<ApiEffects>;
               };
               terminal: {
-                effects: AsyncEffects<Effects>;
+                effects: ProxyEffects<Effects>;
               };
             },
             Effect<Args, Result>
@@ -80,7 +80,7 @@ export class ExtendableTerminalAdapter<
     return new ExtendableTerminalAdapter(
       this.context,
       this.extendableEffects.extend((currentEffects) => () => {
-        const interceptor = new AsyncEffectInterceptor();
+        const interceptor = new ProxyEffectInterceptor();
         const source = {
           store: {
             effects: asStoreEffects(this.context.store.signals),
@@ -94,8 +94,7 @@ export class ExtendableTerminalAdapter<
         };
 
         return effects({
-          effect: (constructor) =>
-            interceptor.toAsyncEffect(constructor(source)),
+          effect: (constructor) => interceptor.proxy(constructor(source)),
         });
       }),
       this.extendableActions,

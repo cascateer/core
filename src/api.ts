@@ -5,9 +5,11 @@ import {
   isEqual,
   isFunction,
   memoize,
+  thru,
 } from "lodash";
 import objectHash from "object-hash";
 import {
+  BehaviorSubject,
   combineLatest,
   filter,
   finalize,
@@ -18,11 +20,12 @@ import {
   repeat,
   shareReplay,
   Subject,
+  tap,
   UnaryFunction,
 } from "rxjs";
 import { asObservable, ExtendableDictionary, property } from "./lib";
-import { AsyncObservable } from "./observable";
-import { Action, AsyncEffect, MaybeArray, MaybeObservable } from "./types";
+import { ProxyObservable } from "./observable";
+import { Action, MaybeArray, MaybeObservable, ProxyEffect } from "./types";
 
 interface TagsConstructor<Args, Result> {
   (args: Args, result: Result): string[];
@@ -37,7 +40,7 @@ class Memoizable<Args, Result> {
   predicate: UnaryFunction<Args, Observable<Result>>;
   tags: TagsConstructor<Args, Result>;
 
-  subscribe: UnaryFunction<Observable<string[]>, AsyncEffect<Args, Result>>;
+  subscribe: UnaryFunction<Observable<string[]>, ProxyEffect<Args, Result>>;
 
   share: UnaryFunction<NextObserver<string[]>, Action<Args, Result>>;
 
@@ -47,26 +50,39 @@ class Memoizable<Args, Result> {
     this.tags = isFunction(tags) ? tags : constant([tags ?? []].flat());
 
     this.subscribe = (invalidatedTags) => {
-      const memoizedEffect: AsyncEffect<Args, Result> = memoize(
+      const memoizedEffect: ProxyEffect<Args, Result> = memoize(
         (args) =>
-          new AsyncObservable((complete) =>
-            this.predicate(args).pipe(
-              finalize(complete),
-              repeat({
-                delay: () =>
-                  combineLatest([
-                    memoizedEffect(args).pipe(
-                      map((result) => this.tags(args, result)),
-                    ),
-                    invalidatedTags,
-                  ]).pipe(
-                    filter(([tags, invalidatedTags]) =>
-                      isEqual(tags, intersectionWith(tags, invalidatedTags)),
-                    ),
+          thru(
+            new BehaviorSubject(false),
+            (pending) =>
+              new ProxyObservable(
+                this.predicate(args),
+                (source) =>
+                  source.pipe(
+                    tap({
+                      subscribe: () => pending.next(true),
+                    }),
+                    finalize(() => pending.next(false)),
+                    repeat({
+                      delay: () =>
+                        combineLatest([
+                          memoizedEffect(args).pipe(
+                            map((result) => this.tags(args, result)),
+                          ),
+                          invalidatedTags,
+                        ]).pipe(
+                          filter(([tags, invalidatedTags]) =>
+                            isEqual(
+                              tags,
+                              intersectionWith(tags, invalidatedTags),
+                            ),
+                          ),
+                        ),
+                    }),
+                    shareReplay({ bufferSize: 1, refCount: false }),
                   ),
-              }),
-              shareReplay({ bufferSize: 1, refCount: false }),
-            ),
+                pending,
+              ),
           ),
         (args) => objectHash(args ?? null),
       );
@@ -81,7 +97,7 @@ class Memoizable<Args, Result> {
   }
 }
 
-export interface ApiEffect<Args, Result> extends AsyncEffect<Args, Result> {}
+export interface ApiEffect<Args, Result> extends ProxyEffect<Args, Result> {}
 
 type ApiAdapterPropertyConstructor<Source, Type extends "effect" | "action"> = {
   [T in Type]: <Args, Result>(

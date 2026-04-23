@@ -1,6 +1,6 @@
 import { clone, identity, isEqual, memoize } from "lodash";
 import { distinctUntilChanged, map, Observable, of, UnaryFunction } from "rxjs";
-import { AsyncObservable, ProxyObservable } from ".";
+import { ProxyObservable } from ".";
 import {
   asEnumerable,
   EnumerableItem,
@@ -33,12 +33,7 @@ class SignalReflector<T> {
     new SignalReflector((transform) => this.predicate(lift(transform)));
 }
 
-export class Signal<T>
-  extends ProxyObservable<T>
-  implements AsyncObservable<T>
-{
-  pending = of(false);
-
+export class Signal<T> extends ProxyObservable<T> {
   clone(): Signal<T> {
     return this;
   }
@@ -59,7 +54,7 @@ export class Signal<T>
     enumerator?: SignalEnumerator<T>;
     reflector?: SignalReflector<T>;
   }) {
-    super(value, identity);
+    super(value, identity, of(false));
 
     this.enumerator = enumerator;
     this.reflector = reflector;

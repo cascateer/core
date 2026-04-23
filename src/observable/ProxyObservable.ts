@@ -6,9 +6,17 @@ export interface ProxyObservableHandler<T, U> {
 }
 
 export class ProxyObservable<T, U = T> extends Observable<U> {
-  constructor(target: Observable<T>, handler: ProxyObservableHandler<T, U>) {
+  pending: Observable<boolean>;
+
+  constructor(
+    target: Observable<T>,
+    handler: ProxyObservableHandler<T, U>,
+    pending: Observable<boolean>,
+  ) {
     handler = once(handler);
 
     super((subscriber) => handler(target).subscribe(subscriber));
+
+    this.pending = pending;
   }
 }
