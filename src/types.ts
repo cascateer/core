@@ -1,8 +1,8 @@
-import { Dictionary, mapValues, tap } from "lodash";
+import { Dictionary, mapValues, thru } from "lodash";
 import {
+  BehaviorSubject,
   combineLatest,
   distinct,
-  identity,
   map,
   ReplaySubject,
   switchMap,
@@ -11,7 +11,7 @@ import {
 import { Observable } from "rxjs/internal/Observable";
 import { ObservableInput } from "rxjs/internal/types";
 import { ProxyObservable } from "./observable";
-import { concat } from "./operators";
+import { concat, tapSubscription } from "./operators";
 
 export interface Effect<Args, Result> extends UnaryFunction<
   Args,
@@ -44,16 +44,25 @@ export class ProxyEffectInterceptor extends ReplaySubject<
   ): ProxyEffects<Effects> {
     return mapValues(
       effects,
-      (effect) => (args) => tap(effect(args), (source) => this.next(source)),
+      (effect) => (args) =>
+        thru(
+          new BehaviorSubject(false),
+          (subscribed) =>
+            new ProxyObservable(effect(args), (target) => ({
+              value: target.pipe(tapSubscription(subscribed)),
+              pending: combineLatest([target.pending, subscribed]).pipe(
+                map((values) => values.every(Boolean)),
+              ),
+            })),
+        ),
     );
   }
 
   proxy<Args, Result>(effect: Effect<Args, Result>): ProxyEffect<Args, Result> {
     return (args) =>
-      new ProxyObservable(
-        effect(args),
-        identity,
-        this.pipe(
+      new ProxyObservable(effect(args), (target) => ({
+        value: target,
+        pending: this.pipe(
           distinct(),
           concat(),
           switchMap((sources) =>
@@ -61,7 +70,7 @@ export class ProxyEffectInterceptor extends ReplaySubject<
           ),
           map((values) => values.some(Boolean)),
         ),
-      );
+      }));
   }
 }
 

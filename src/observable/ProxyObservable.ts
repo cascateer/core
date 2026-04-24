@@ -1,21 +1,33 @@
-import { once } from "lodash";
-import { Observable, of } from "rxjs";
+import { thru } from "lodash";
+import { isObservable, Observable, of } from "rxjs";
 
-export interface ProxyObservableHandler<T, R> {
-  (target: Observable<T>): Observable<R>;
+export interface ProxyObservableDescriptor<T, U> {
+  (target: T):
+    | U
+    | {
+        value: U;
+        pending?: Observable<boolean>;
+      };
 }
 
-export class ProxyObservable<T, R = T> extends Observable<R> {
+export class ProxyObservable<
+  X,
+  Y = X,
+  T extends Observable<X> = Observable<X>,
+> extends Observable<Y> {
   pending: Observable<boolean>;
 
   constructor(
-    target: Observable<T>,
-    handler: ProxyObservableHandler<T, R>,
-    pending = of(false),
+    target: T,
+    descriptor: ProxyObservableDescriptor<T, Observable<Y>>,
   ) {
-    handler = once(handler);
+    const { value, pending = of(false) } = thru(
+      descriptor(target),
+      (descriptor) =>
+        isObservable(descriptor) ? { value: descriptor } : descriptor,
+    );
 
-    super((subscriber) => handler(target).subscribe(subscriber));
+    super((subscriber) => value.subscribe(subscriber));
 
     this.pending = pending;
   }

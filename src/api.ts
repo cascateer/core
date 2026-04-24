@@ -55,34 +55,32 @@ class Memoizable<Args, Result> {
           thru(
             new BehaviorSubject(false),
             (pending) =>
-              new ProxyObservable(
-                this.predicate(args),
-                (source) =>
-                  source.pipe(
-                    tap({
-                      subscribe: () => pending.next(true),
-                    }),
-                    finalize(() => pending.next(false)),
-                    repeat({
-                      delay: () =>
-                        combineLatest([
-                          memoizedEffect(args).pipe(
-                            map((result) => this.tags(args, result)),
-                          ),
-                          invalidatedTags,
-                        ]).pipe(
-                          filter(([tags, invalidatedTags]) =>
-                            isEqual(
-                              tags,
-                              intersectionWith(tags, invalidatedTags),
-                            ),
+              new ProxyObservable(this.predicate(args), (target) => ({
+                value: target.pipe(
+                  tap({
+                    subscribe: () => pending.next(true),
+                  }),
+                  finalize(() => pending.next(false)),
+                  repeat({
+                    delay: () =>
+                      combineLatest([
+                        memoizedEffect(args).pipe(
+                          map((result) => this.tags(args, result)),
+                        ),
+                        invalidatedTags,
+                      ]).pipe(
+                        filter(([tags, invalidatedTags]) =>
+                          isEqual(
+                            tags,
+                            intersectionWith(tags, invalidatedTags),
                           ),
                         ),
-                    }),
-                    shareReplay({ bufferSize: 1, refCount: false }),
-                  ),
+                      ),
+                  }),
+                  shareReplay({ bufferSize: 1, refCount: false }),
+                ),
                 pending,
-              ),
+              })),
           ),
         (args) => objectHash(args ?? null),
       );
