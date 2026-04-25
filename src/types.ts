@@ -1,4 +1,4 @@
-import { Dictionary, mapValues, thru } from "lodash";
+import { Dictionary, mapValues, tap, thru } from "lodash";
 import {
   BehaviorSubject,
   combineLatest,
@@ -45,15 +45,18 @@ export class ProxyEffectInterceptor extends ReplaySubject<
     return mapValues(
       effects,
       (effect) => (args) =>
-        thru(
-          new BehaviorSubject(false),
-          (subscribed) =>
-            new ProxyObservable(effect(args), (target) => ({
-              value: target.pipe(tapSubscription(subscribed)),
-              pending: combineLatest([target.pending, subscribed]).pipe(
-                map((values) => values.every(Boolean)),
-              ),
-            })),
+        tap(
+          thru(
+            new BehaviorSubject(false),
+            (subscribed) =>
+              new ProxyObservable(effect(args), (target) => ({
+                value: target.pipe(tapSubscription(subscribed)),
+                pending: combineLatest([target.pending, subscribed]).pipe(
+                  map((values) => values.every(Boolean)),
+                ),
+              })),
+          ),
+          (source) => this.next(source),
         ),
     );
   }
