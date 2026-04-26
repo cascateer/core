@@ -11,13 +11,16 @@ import {
   UnaryFunction,
 } from "rxjs";
 
-export class ProxyObservable<T> extends Observable<T> {
+export class ProxyObservable<
+  T,
+  U extends Observable<T> = Observable<T>,
+> extends Observable<T> {
   pending: Observable<boolean>;
   refCount: Observable<number>;
 
   constructor(
-    target: Observable<T> | ((pending: NextObserver<boolean>) => Observable<T>),
-    pendingFactory?: UnaryFunction<ProxyObservable<T>, Observable<boolean>>,
+    target: U | ((pending: NextObserver<boolean>) => U),
+    pendingFactory?: UnaryFunction<U, Observable<boolean>>,
   ) {
     const subscribers = new ReplaySubject<
       UnaryFunction<Set<Subscriber<T>>, void>
@@ -42,6 +45,6 @@ export class ProxyObservable<T> extends Observable<T> {
       map((subscribers) => subscribers.size),
     );
 
-    pendingFactory?.call(null, this).subscribe(pending);
+    pendingFactory?.call(null, project(pending)).subscribe(pending);
   }
 }
