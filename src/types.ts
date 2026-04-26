@@ -1,4 +1,5 @@
-import { Dictionary, mapValues, tap } from "lodash";
+import { Dictionary, mapValues, memoize, tap } from "lodash";
+import objectHash from "object-hash";
 import {
   combineLatest,
   distinct,
@@ -41,17 +42,19 @@ export class ProxyEffectInterceptor extends ReplaySubject<
   intercept<Effects extends Dictionary<ProxyEffect<any, any>>>(
     effects: Effects,
   ): ProxyEffects<Effects> {
-    return mapValues(
-      effects,
-      (effect) => (args) =>
-        tap(
-          new ProxyObservable(effect(args), (target) =>
-            combineLatest([target.pending, target.refCount]).pipe(
-              map((values) => values.every(Boolean)),
+    return mapValues(effects, (effect) =>
+      memoize(
+        (args) =>
+          tap(
+            new ProxyObservable(effect(args), (target) =>
+              combineLatest([target.pending, target.refCount]).pipe(
+                map((values) => values.every(Boolean)),
+              ),
             ),
+            (source) => this.next(source),
           ),
-          (source) => this.next(source),
-        ),
+        (args) => objectHash(args ?? null),
+      ),
     );
   }
 
