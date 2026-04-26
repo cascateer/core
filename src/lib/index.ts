@@ -11,6 +11,7 @@ export {
 } from "./Enumerable";
 export { ExtendableDictionary } from "./ExtendableDictionary";
 export { keys } from "./keys";
+export { memoizeHashed } from "./memoizeHashed";
 export { nthArg } from "./nthArg";
 export { property } from "./property";
 
