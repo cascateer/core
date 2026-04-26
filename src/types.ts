@@ -1,6 +1,5 @@
-import { Dictionary, mapValues, tap, thru } from "lodash";
+import { Dictionary, mapValues, tap } from "lodash";
 import {
-  BehaviorSubject,
   combineLatest,
   distinct,
   map,
@@ -11,7 +10,7 @@ import {
 import { Observable } from "rxjs/internal/Observable";
 import { ObservableInput } from "rxjs/internal/types";
 import { ProxyObservable } from "./observable";
-import { concat, tapSubscription } from "./operators";
+import { concat } from "./operators";
 
 export interface Effect<Args, Result> extends UnaryFunction<
   Args,
@@ -46,16 +45,12 @@ export class ProxyEffectInterceptor extends ReplaySubject<
       effects,
       (effect) => (args) =>
         tap(
-          thru(
-            new BehaviorSubject(false),
-            (subscribed) =>
-              new ProxyObservable(effect(args), (target) => ({
-                value: target.pipe(tapSubscription(subscribed)),
-                pending: combineLatest([target.pending, subscribed]).pipe(
-                  map((values) => values.every(Boolean)),
-                ),
-              })),
-          ),
+          new ProxyObservable(effect(args), (target) => ({
+            value: target,
+            pending: combineLatest([target.pending, target.refCount]).pipe(
+              map((values) => values.every(Boolean)),
+            ),
+          })),
           (source) => this.next(source),
         ),
     );
