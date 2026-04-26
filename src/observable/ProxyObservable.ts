@@ -4,8 +4,8 @@ import {
   map,
   Observable,
   of,
+  ReplaySubject,
   scan,
-  Subject,
   Subscriber,
   UnaryFunction,
 } from "rxjs";
@@ -37,7 +37,9 @@ export class ProxyObservable<
         isObservable(descriptor) ? { value: descriptor } : descriptor,
     );
 
-    const subscribers = new Subject<UnaryFunction<Set<Subscriber<Y>>, void>>();
+    const subscribers = new ReplaySubject<
+      UnaryFunction<Set<Subscriber<Y>>, void>
+    >();
 
     super((subscriber) => {
       subscribers.next((subscribers) => subscribers.add(subscriber));
