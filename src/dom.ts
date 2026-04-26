@@ -1,4 +1,4 @@
-import { isObject, memoize } from "lodash";
+import { identity, isObject, memoize } from "lodash";
 import { createFragment } from ".";
 
 export class CustomElement extends HTMLElement {
@@ -18,7 +18,7 @@ export const defineCustomElement = memoize((key: string) => {
   customElements.define(key, constructor);
 
   return constructor;
-});
+}, identity);
 
 export const defineCustomProperties = (
   definitions: Partial<JSX.CSSCustomPropertyDefinitions>,
