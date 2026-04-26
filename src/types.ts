@@ -45,12 +45,11 @@ export class ProxyEffectInterceptor extends ReplaySubject<
       effects,
       (effect) => (args) =>
         tap(
-          new ProxyObservable(effect(args), (target) => ({
-            value: target,
-            pending: combineLatest([target.pending, target.refCount]).pipe(
+          new ProxyObservable(effect(args), (target) =>
+            combineLatest([target.pending, target.refCount]).pipe(
               map((values) => values.every(Boolean)),
             ),
-          })),
+          ),
           (source) => this.next(source),
         ),
     );
@@ -58,9 +57,8 @@ export class ProxyEffectInterceptor extends ReplaySubject<
 
   proxy<Args, Result>(effect: Effect<Args, Result>): ProxyEffect<Args, Result> {
     return (args) =>
-      new ProxyObservable(effect(args), (target) => ({
-        value: target,
-        pending: this.pipe(
+      new ProxyObservable(effect(args), () =>
+        this.pipe(
           distinct(),
           concat(),
           switchMap((sources) =>
@@ -68,7 +66,7 @@ export class ProxyEffectInterceptor extends ReplaySubject<
           ),
           map((values) => values.some(Boolean)),
         ),
-      }));
+      );
   }
 }
 

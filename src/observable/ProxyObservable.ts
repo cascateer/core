@@ -1,45 +1,30 @@
-import { tap, thru } from "lodash";
+import { constant, once, tap } from "lodash";
 import {
+  BehaviorSubject,
   isObservable,
   map,
+  NextObserver,
   Observable,
-  of,
   ReplaySubject,
   scan,
   Subscriber,
   UnaryFunction,
 } from "rxjs";
 
-export interface ProxyObservableDescriptor<T, U> {
-  (target: T):
-    | U
-    | {
-        value: U;
-        pending?: Observable<boolean>;
-      };
-}
-
-export class ProxyObservable<
-  X,
-  Y = X,
-  T extends Observable<X> = Observable<X>,
-> extends Observable<Y> {
+export class ProxyObservable<T> extends Observable<T> {
   pending: Observable<boolean>;
   refCount: Observable<number>;
 
   constructor(
-    target: T,
-    descriptor: ProxyObservableDescriptor<T, Observable<Y>>,
+    target: Observable<T> | ((pending: NextObserver<boolean>) => Observable<T>),
+    pendingFactory?: UnaryFunction<ProxyObservable<T>, Observable<boolean>>,
   ) {
-    const { value, pending = of(false) } = thru(
-      descriptor(target),
-      (descriptor) =>
-        isObservable(descriptor) ? { value: descriptor } : descriptor,
-    );
-
     const subscribers = new ReplaySubject<
-      UnaryFunction<Set<Subscriber<Y>>, void>
+      UnaryFunction<Set<Subscriber<T>>, void>
     >();
+
+    const project = once(isObservable(target) ? constant(target) : target);
+    const pending = new BehaviorSubject(false);
 
     super((subscriber) => {
       subscribers.next((subscribers) => subscribers.add(subscriber));
@@ -48,12 +33,14 @@ export class ProxyObservable<
         subscribers.next((subscribers) => subscribers.delete(subscriber)),
       );
 
-      return value.subscribe(subscriber);
+      return project(pending).subscribe(subscriber);
     });
+
+    pendingFactory?.call(null, this).subscribe(pending);
 
     this.pending = pending;
     this.refCount = subscribers.pipe(
-      scan(tap, new Set<Subscriber<Y>>()),
+      scan(tap, new Set<Subscriber<T>>()),
       map((subscribers) => subscribers.size),
     );
   }
