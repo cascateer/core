@@ -36,13 +36,12 @@ export class ProxyObservable<T> extends Observable<T> {
       return project(pending).subscribe(subscriber);
     });
 
-    console.log(pendingFactory, this);
-    pendingFactory?.call(null, this).subscribe(pending);
-
     this.pending = pending;
     this.refCount = subscribers.pipe(
       scan(tap, new Set<Subscriber<T>>()),
       map((subscribers) => subscribers.size),
     );
+
+    pendingFactory?.call(null, this).subscribe(pending);
   }
 }
