@@ -1,4 +1,4 @@
-import { constant, once, tap } from "lodash";
+import { once, tap } from "lodash";
 import {
   BehaviorSubject,
   isObservable,
@@ -26,8 +26,10 @@ export class ProxyObservable<
       UnaryFunction<Set<Subscriber<T>>, void>
     >();
 
-    const project = once(isObservable(target) ? constant(target) : target);
     const pending = new BehaviorSubject(false);
+    const source = once(() =>
+      isObservable(target) ? target : target(pending),
+    );
 
     super((subscriber) => {
       subscribers.next((subscribers) => subscribers.add(subscriber));
@@ -36,7 +38,7 @@ export class ProxyObservable<
         subscribers.next((subscribers) => subscribers.delete(subscriber)),
       );
 
-      return project(pending).subscribe(subscriber);
+      return source().subscribe(subscriber);
     });
 
     this.pending = pending;
@@ -45,6 +47,6 @@ export class ProxyObservable<
       map((subscribers) => subscribers.size),
     );
 
-    pendingFactory?.call(null, project(pending)).subscribe(pending);
+    pendingFactory?.call(null, source()).subscribe(pending);
   }
 }
