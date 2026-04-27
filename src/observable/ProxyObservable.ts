@@ -4,7 +4,6 @@ import {
   EMPTY,
   isObservable,
   map,
-  mergeWith,
   NextObserver,
   Observable,
   ReplaySubject,
@@ -43,9 +42,7 @@ export class ProxyObservable<
       return memoizedTarget().subscribe(subscriber);
     });
 
-    console.log(
-      mergeWith(handler?.call(null, memoizedTarget(), this) ?? EMPTY),
-    );
+    console.log(handler?.call(null, memoizedTarget(), this) ?? EMPTY);
 
     this.pending = pending.pipe();
 
