@@ -45,8 +45,8 @@ export class ProxyEffectInterceptor extends ReplaySubject<
     return mapValues(effects, (effect) =>
       memoizeHashed((args) =>
         tap(
-          new ProxyObservable(effect(args), (target) =>
-            combineLatest([target.pending, target.refCount]).pipe(
+          new ProxyObservable(effect(args), (target, receiver) =>
+            combineLatest([target.pending, receiver.refCount]).pipe(
               map((values) => values.every(Boolean)),
             ),
           ),

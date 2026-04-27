@@ -20,14 +20,14 @@ export class ProxyObservable<
 
   constructor(
     target: U | ((pending: NextObserver<boolean>) => U),
-    pendingFactory?: UnaryFunction<U, Observable<boolean>>,
+    handler?: (target: U, receiver: ProxyObservable<T>) => Observable<boolean>,
   ) {
     const subscribers = new ReplaySubject<
       UnaryFunction<Set<Subscriber<T>>, void>
     >();
 
     const pending = new BehaviorSubject(false);
-    const source = once(() =>
+    const memoizedTarget = once(() =>
       isObservable(target) ? target : target(pending),
     );
 
@@ -38,7 +38,7 @@ export class ProxyObservable<
         subscribers.next((subscribers) => subscribers.delete(subscriber)),
       );
 
-      return source().subscribe(subscriber);
+      return memoizedTarget().subscribe(subscriber);
     });
 
     this.pending = pending;
@@ -47,6 +47,6 @@ export class ProxyObservable<
       map((subscribers) => subscribers.size),
     );
 
-    pendingFactory?.call(null, source()).subscribe(pending);
+    handler?.call(null, memoizedTarget(), this).subscribe(pending);
   }
 }

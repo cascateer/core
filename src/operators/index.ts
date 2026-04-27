@@ -12,4 +12,3 @@ export {
 } from "./multicast";
 export { proxyReplaySubject } from "./proxyReplaySubject";
 export { sequence } from "./sequence";
-export { tapSubscription } from "./tapSubscription";
