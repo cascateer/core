@@ -1,8 +1,10 @@
 import { once, tap } from "lodash";
 import {
   BehaviorSubject,
+  EMPTY,
   isObservable,
   map,
+  mergeWith,
   NextObserver,
   Observable,
   ReplaySubject,
@@ -41,12 +43,13 @@ export class ProxyObservable<
       return memoizedTarget().subscribe(subscriber);
     });
 
-    this.pending = pending;
+    this.pending = pending.pipe(
+      mergeWith(handler?.call(null, memoizedTarget(), this) ?? EMPTY),
+    );
+
     this.refCount = subscribers.pipe(
       scan(tap, new Set<Subscriber<T>>()),
       map((subscribers) => subscribers.size),
     );
-
-    handler?.call(null, memoizedTarget(), this).subscribe(pending);
   }
 }
