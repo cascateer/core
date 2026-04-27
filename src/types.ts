@@ -2,7 +2,6 @@ import { Dictionary, mapValues, tap } from "lodash";
 import {
   combineLatest,
   distinct,
-  map,
   ReplaySubject,
   switchMap,
   UnaryFunction,
@@ -11,7 +10,7 @@ import { Observable } from "rxjs/internal/Observable";
 import { ObservableInput } from "rxjs/internal/types";
 import { memoizeHashed } from "./lib";
 import { ProxyObservable } from "./observable";
-import { concat } from "./operators";
+import { concat, every, some } from "./operators";
 
 export interface Effect<Args, Result> extends UnaryFunction<
   Args,
@@ -46,9 +45,7 @@ export class ProxyEffectInterceptor extends ReplaySubject<
       memoizeHashed((args) =>
         tap(
           new ProxyObservable(effect(args), (target, receiver) =>
-            combineLatest([target.pending, receiver.refCount]).pipe(
-              map((values) => values.every(Boolean)),
-            ),
+            combineLatest([target.pending, receiver.refCount]).pipe(every()),
           ),
           (source) => this.next(source),
         ),
@@ -65,7 +62,7 @@ export class ProxyEffectInterceptor extends ReplaySubject<
           switchMap((sources) =>
             combineLatest(sources.map((source) => source.pending)),
           ),
-          map((values) => values.some(Boolean)),
+          some(),
         ),
       );
   }

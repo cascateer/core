@@ -1,4 +1,5 @@
 export { concat } from "./concat";
+export { every } from "./every";
 export { exchangeWith } from "./exchangeWith";
 export { flatMap } from "./flatMap";
 export {
@@ -12,3 +13,4 @@ export {
 } from "./multicast";
 export { proxyReplaySubject } from "./proxyReplaySubject";
 export { sequence } from "./sequence";
+export { some } from "./some";
