@@ -1,10 +1,16 @@
 import { Dictionary, mapValues, tap } from "lodash";
-import { combineLatest, of, ReplaySubject, UnaryFunction } from "rxjs";
+import {
+  combineLatest,
+  ReplaySubject,
+  tap as rxjsTap,
+  switchMap,
+  UnaryFunction,
+} from "rxjs";
 import { Observable } from "rxjs/internal/Observable";
 import { ObservableInput } from "rxjs/internal/types";
 import { memoizeHashed } from "./lib/memoizeHashed";
 import { ProxyObservable } from "./observable";
-import { every } from "./operators";
+import { concat, every, some } from "./operators";
 
 export interface Effect<Args, Result> extends UnaryFunction<
   Args,
@@ -48,7 +54,17 @@ export class ProxyEffectInterceptor extends ReplaySubject<
   }
 
   proxy<Args, Result>(effect: Effect<Args, Result>): ProxyEffect<Args, Result> {
-    return (args) => new ProxyObservable(effect(args), () => of(false));
+    return (args) =>
+      new ProxyObservable(effect(args), () =>
+        this.pipe(
+          concat(),
+          rxjsTap((x) => console.log(x)),
+          switchMap((sources) =>
+            combineLatest(sources.map((source) => source.pending)),
+          ),
+          some(),
+        ),
+      );
   }
 }
 
