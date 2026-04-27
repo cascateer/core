@@ -43,6 +43,8 @@ export class ProxyObservable<
       return memoizedTarget().subscribe(subscriber);
     });
 
+    console.log(handler?.call(null, memoizedTarget(), this) ?? EMPTY);
+
     this.pending = merge(
       pending,
       handler?.call(null, memoizedTarget(), this) ?? EMPTY,
