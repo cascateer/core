@@ -44,10 +44,7 @@ export class ProxyObservable<
     });
 
     this.pending = pending.pipe(
-      mergeWith(
-        (console.log(handler?.call(null, memoizedTarget(), this) ?? EMPTY),
-        handler?.call(null, memoizedTarget(), this) ?? EMPTY),
-      ),
+      mergeWith(handler?.call(null, memoizedTarget(), this) ?? EMPTY),
     );
 
     this.refCount = subscribers.pipe(
