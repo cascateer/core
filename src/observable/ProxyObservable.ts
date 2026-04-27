@@ -1,6 +1,7 @@
 import { once, tap } from "lodash";
 import {
   BehaviorSubject,
+  EMPTY,
   isObservable,
   map,
   mergeWith,
@@ -43,7 +44,10 @@ export class ProxyObservable<
     });
 
     this.pending = pending.pipe(
-      mergeWith(...[handler?.call(null, memoizedTarget(), this) ?? []]),
+      mergeWith(
+        (console.log(handler?.call(null, memoizedTarget(), this) ?? EMPTY),
+        handler?.call(null, memoizedTarget(), this) ?? EMPTY),
+      ),
     );
 
     this.refCount = subscribers.pipe(
