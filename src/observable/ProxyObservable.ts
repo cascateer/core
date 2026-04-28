@@ -1,4 +1,4 @@
-import { once, tap } from "lodash";
+import { once, tap, thru } from "lodash";
 import {
   BehaviorSubject,
   isObservable,
@@ -8,6 +8,7 @@ import {
   ReplaySubject,
   scan,
   Subscriber,
+  switchAll,
   UnaryFunction,
 } from "rxjs";
 
@@ -26,9 +27,12 @@ export class ProxyObservable<
       UnaryFunction<Set<Subscriber<T>>, void>
     >();
 
-    const pending = new BehaviorSubject(false);
-    const memoizedTarget = once(() =>
-      isObservable(target) ? target : target(pending),
+    const { target: memoizedTarget, pending } = thru(
+      new BehaviorSubject(false),
+      (pending) => ({
+        target: once(() => (isObservable(target) ? target : target(pending))),
+        pending: new BehaviorSubject<Observable<boolean>>(pending),
+      }),
     );
 
     super((subscriber) => {
@@ -41,11 +45,15 @@ export class ProxyObservable<
       return memoizedTarget().subscribe(subscriber);
     });
 
-    this.pending = handler?.call(null, memoizedTarget(), this) ?? pending;
+    this.pending = pending.pipe(switchAll());
 
     this.refCount = subscribers.pipe(
       scan(tap, new Set<Subscriber<T>>()),
       map((subscribers) => subscribers.size),
     );
+
+    if (handler != null) {
+      pending.next(handler(memoizedTarget(), this));
+    }
   }
 }
