@@ -4,7 +4,9 @@ import {
   intersectionWith,
   isEqual,
   isFunction,
+  memoize,
 } from "lodash";
+import objectHash from "object-hash";
 import {
   combineLatest,
   filter,
@@ -20,7 +22,6 @@ import {
   UnaryFunction,
 } from "rxjs";
 import { asObservable, ExtendableDictionary, property } from "./lib";
-import { memoizeHashed } from "./lib/memoizeHashed";
 import { ProxyObservable } from "./observable";
 import { Action, MaybeArray, MaybeObservable, ProxyEffect } from "./types";
 
@@ -47,7 +48,7 @@ class Memoizable<Args, Result> {
     this.tags = isFunction(tags) ? tags : constant([tags ?? []].flat());
 
     this.subscribe = (invalidatedTags) => {
-      const memoizedEffect: ProxyEffect<Args, Result> = memoizeHashed(
+      const memoizedEffect: ProxyEffect<Args, Result> = memoize(
         (args) =>
           new ProxyObservable((pending) =>
             this.predicate(args).pipe(
@@ -71,6 +72,7 @@ class Memoizable<Args, Result> {
               shareReplay({ bufferSize: 1, refCount: false }),
             ),
           ),
+        (args) => objectHash(args ?? null),
       );
 
       return memoizedEffect;
