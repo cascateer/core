@@ -2,6 +2,7 @@ import { Dictionary, mapValues, tap } from "lodash";
 import { combineLatest, ReplaySubject, switchMap, UnaryFunction } from "rxjs";
 import { Observable } from "rxjs/internal/Observable";
 import { ObservableInput } from "rxjs/internal/types";
+import { memoizeHashed } from "./lib/memoizeHashed";
 import { ProxyObservable } from "./observable";
 import { concat, every, some } from "./operators";
 
@@ -34,15 +35,15 @@ export class ProxyEffectInterceptor extends ReplaySubject<
   intercept<Effects extends Dictionary<ProxyEffect<any, any>>>(
     effects: Effects,
   ): ProxyEffects<Effects> {
-    return mapValues(
-      effects,
-      (effect) => (args) =>
+    return mapValues(effects, (effect) =>
+      memoizeHashed((args) =>
         tap(
           new ProxyObservable(effect(args), (target, receiver) =>
             combineLatest([target.pending, receiver.refCount]).pipe(every()),
           ),
           (source) => this.next(source),
         ),
+      ),
     );
   }
 
