@@ -7,6 +7,7 @@ import {
   merge,
   NextObserver,
   Observable,
+  of,
   ReplaySubject,
   scan,
   Subscriber,
@@ -47,7 +48,7 @@ export class ProxyObservable<
 
     this.pending = merge(
       pending,
-      handler?.call(null, memoizedTarget(), this) ?? EMPTY,
+      handler?.call(null, memoizedTarget(), this) ?? of(false),
     );
 
     this.refCount = subscribers.pipe(
