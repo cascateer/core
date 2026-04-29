@@ -73,7 +73,8 @@ self.addEventListener("connect", ({ ports }) => {
     actions.next(
       actions.pipe(
         flatMap(({ ports, action: { origin, ...message } }) =>
-          ports.includes(port) && (!message.sameOrigin || origin === port)
+          (message.type === "seedAction" || ports.includes(port)) &&
+          (!message.sameOrigin || origin === port)
             ? message
             : [],
         ),
