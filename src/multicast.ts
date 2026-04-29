@@ -1,17 +1,25 @@
-import { memoize, thru } from "lodash";
-import { mergeAll, Observable, startWith, tap } from "rxjs";
-import { v4 } from "uuid";
-import { nonNullable, property } from "./lib";
-import { Future } from "./observable";
+import { tap } from "lodash";
 import {
+  combineLatest,
+  groupBy,
+  map,
+  mergeAll,
+  mergeMap,
+  Observable,
+  partition,
+} from "rxjs";
+import { v4 } from "uuid";
+import { nonNullable } from "./lib";
+import {
+  concatLeft,
   exchangeWith,
   flatMap,
   MulticastActionMessage,
   MulticastClientMessage,
-  MulticastConnectMessageData,
   proxyReplaySubject,
   sequence,
 } from "./operators";
+import { MulticastConnectMessage } from "./operators/multicast";
 
 declare var self: ServiceWorkerGlobalScope;
 
@@ -21,59 +29,73 @@ declare global {
   }
 }
 
-const memoizedSliceActions = memoize(
-  <Seed>({ seed }: MulticastConnectMessageData<Seed>) =>
-    proxyReplaySubject<MulticastActionMessage<any>>((actions) =>
-      actions.pipe(
-        startWith({
-          id: v4(),
-          type: "seedAction" as const,
-          data: {
-            seed,
-          },
-        }),
+const actions = proxyReplaySubject<
+  Observable<[MulticastConnectMessage<any>, MulticastActionMessage<any>]>,
+  {
+    ports: MessagePort[];
+    action: MulticastActionMessage<any>;
+  }
+>((messages) =>
+  messages.pipe(
+    mergeAll(),
+    groupBy(([connect]) => connect.data.key),
+    mergeMap((group) =>
+      group.pipe(
+        flatMap(([connect, action], index) =>
+          index
+            ? action
+            : [
+                {
+                  id: v4(),
+                  type: "seedAction" as const,
+                  data: {
+                    seed: connect.data.seed,
+                  },
+                },
+                action,
+              ],
+        ),
+        concatLeft(),
+        flatMap((actions) =>
+          0 in actions
+            ? {
+                ports: actions.flatMap((action) => action.origin ?? []),
+                action: actions[0],
+              }
+            : [],
+        ),
       ),
     ),
-  property("key"),
+  ),
 );
 
 self.addEventListener("connect", ({ ports }) => {
   for (const port of ports) {
-    thru(
-      new Future<Observable<MulticastActionMessage<any>>>(),
-      (sliceActions) =>
-        proxyReplaySubject<MulticastActionMessage<any>, MulticastClientMessage>(
-          (actions) =>
-            sliceActions.pipe(
-              mergeAll(),
-              flatMap(({ origin, ...message }) =>
-                !message.sameOrigin || origin === port ? message : [],
-              ),
-              sequence(([action, previousAction]) =>
-                action.type === "seedAction"
-                  ? action
-                  : {
-                      ...action,
-                      previousId: nonNullable(previousAction).id,
-                    },
-              ),
-              exchangeWith<MulticastClientMessage, MulticastActionMessage<any>>(
-                port,
-              ),
-              flatMap((event) => {
-                if (event.type === "connect") {
-                  actions.subscribe(
-                    sliceActions.completeWith(memoizedSliceActions(event.data)),
-                  );
-
-                  return [];
-                }
-
-                return { ...event, origin: port };
-              }),
-              tap(actions),
-            ),
+    actions
+      .pipe(
+        flatMap(({ ports, action: { origin, ...message } }) =>
+          ports.includes(port) && (!message.sameOrigin || origin === port)
+            ? message
+            : [],
         ),
-    ).subscribe();
+        sequence(([action, previousAction]) =>
+          action.type === "seedAction"
+            ? action
+            : {
+                ...action,
+                previousId: nonNullable(previousAction).id,
+              },
+        ),
+        exchangeWith<MulticastClientMessage, MulticastActionMessage<any>>(port),
+        map((event) => ({ ...event, origin: port })),
+        (messages) =>
+          tap(
+            combineLatest(
+              partition(messages, (message) => message.type === "connect"),
+            ),
+            (sliceActions) => actions.next(sliceActions),
+          ),
+      )
+      .subscribe();
   }
 });

@@ -1,8 +1,9 @@
 import { concatMap, shareReplay, startWith, UnaryFunction } from "rxjs";
 import { v4 } from "uuid";
 import { ComputedSignal, ProxySubject } from "../observable";
-import { exchangeWith, proxyReplaySubject } from "../operators";
 import { Transform } from "../types";
+import { exchangeWith } from "./exchangeWith";
+import { proxyReplaySubject } from "./proxyReplaySubject";
 
 interface MulticastBaseMessage<Type, Data> {
   id: string;
@@ -56,7 +57,7 @@ export interface MulticastConnectMessageData<Seed> {
   seed: Seed;
 }
 
-type MulticastConnectMessage<Seed = any> = MulticastBaseMessage<
+export type MulticastConnectMessage<Seed = any> = MulticastBaseMessage<
   "connect",
   MulticastConnectMessageData<Seed>
 >;
