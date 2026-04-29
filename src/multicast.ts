@@ -1,4 +1,3 @@
-import { tap } from "lodash";
 import {
   combineLatest,
   groupBy,
@@ -7,6 +6,7 @@ import {
   mergeMap,
   Observable,
   partition,
+  tap,
 } from "rxjs";
 import { v4 } from "uuid";
 import { nonNullable } from "./lib";
@@ -71,32 +71,36 @@ const actions = proxyReplaySubject<
 
 self.addEventListener("connect", ({ ports }) => {
   for (const port of ports) {
-    actions
-      .pipe(
-        flatMap(({ ports, action: { origin, ...message } }) =>
-          ports.includes(port) && (!message.sameOrigin || origin === port)
-            ? message
-            : [],
-        ),
-        sequence(([action, previousAction]) =>
-          action.type === "seedAction"
-            ? action
-            : {
-                ...action,
-                previousId: nonNullable(previousAction).id,
-              },
-        ),
-        exchangeWith<MulticastClientMessage, MulticastActionMessage<any>>(port),
-        map((event) => ({ ...event, origin: port })),
-        (messages) =>
-          tap(
+    actions.next(
+      proxyReplaySubject<
+        [MulticastConnectMessage<any>, MulticastActionMessage<any>]
+      >((sliceActions) =>
+        actions.pipe(
+          flatMap(({ ports, action: { origin, ...message } }) =>
+            ports.includes(port) && (!message.sameOrigin || origin === port)
+              ? message
+              : [],
+          ),
+          sequence(([action, previousAction]) =>
+            action.type === "seedAction"
+              ? action
+              : {
+                  ...action,
+                  previousId: nonNullable(previousAction).id,
+                },
+          ),
+          exchangeWith<MulticastClientMessage, MulticastActionMessage<any>>(
+            port,
+          ),
+          map((event) => ({ ...event, origin: port })),
+          (messages) =>
             combineLatest(
               partition(messages, (message) => message.type === "connect"),
             ),
-            (sliceActions) => actions.next(sliceActions),
-          ),
-      )
-      .subscribe();
+          tap(sliceActions),
+        ),
+      ),
+    );
   }
 });
 
