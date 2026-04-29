@@ -1,3 +1,4 @@
+import { compact } from "lodash";
 import {
   combineLatest,
   groupBy,
@@ -6,6 +7,7 @@ import {
   mergeMap,
   Observable,
   partition,
+  startWith,
 } from "rxjs";
 import { v4 } from "uuid";
 import { nonNullable } from "./lib";
@@ -29,7 +31,9 @@ declare global {
 }
 
 const actions = proxyReplaySubject<
-  Observable<[MulticastConnectMessage<any>, MulticastActionMessage<any>]>,
+  Observable<
+    [MulticastConnectMessage<any>, MulticastActionMessage<any> | null]
+  >,
   {
     ports: MessagePort[];
     action: MulticastActionMessage<any>;
@@ -41,18 +45,20 @@ const actions = proxyReplaySubject<
     mergeMap((group) =>
       group.pipe(
         flatMap(([connect, action], index) =>
-          index
-            ? action
-            : [
-                {
-                  id: v4(),
-                  type: "seedAction" as const,
-                  data: {
-                    seed: connect.data.seed,
+          compact(
+            index
+              ? [action]
+              : [
+                  {
+                    id: v4(),
+                    type: "seedAction" as const,
+                    data: {
+                      seed: connect.data.seed,
+                    },
                   },
-                },
-                action,
-              ],
+                  action,
+                ],
+          ),
         ),
         concatLeft(),
         flatMap((actions) =>
@@ -90,7 +96,10 @@ self.addEventListener("connect", ({ ports }) => {
         map((event) => ({ ...event, origin: port })),
         (messages) =>
           combineLatest(
-            partition(messages, (message) => message.type === "connect"),
+            partition(
+              messages.pipe(startWith(null)),
+              (message) => message?.type === "connect",
+            ),
           ),
       ),
     );
