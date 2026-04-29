@@ -99,3 +99,5 @@ self.addEventListener("connect", ({ ports }) => {
       .subscribe();
   }
 });
+
+actions.subscribe();
