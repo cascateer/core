@@ -100,11 +100,7 @@ self.addEventListener("connect", ({ ports }) => {
             (message) => message.type === "connect",
           );
 
-          if (connect != null) {
-            return { connect, actions };
-          }
-
-          return [];
+          return connect != null ? { connect, actions } : [];
         }),
       ),
     );
