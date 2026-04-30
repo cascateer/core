@@ -92,7 +92,7 @@ self.addEventListener("connect", ({ ports }) => {
               },
         ),
         exchangeWith<MulticastClientMessage, MulticastActionMessage<any>>(port),
-        map((event) => ({ ...event, origin: port })),
+        map((message) => ({ ...message, origin: port })),
         concat(),
         flatMap((messages) => {
           const [[connect], actions] = partition(
@@ -101,7 +101,7 @@ self.addEventListener("connect", ({ ports }) => {
           );
 
           if (connect != null) {
-            return [{ connect, actions }];
+            return { connect, actions };
           }
 
           return [];
