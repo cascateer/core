@@ -1,4 +1,4 @@
-import { partition, uniqBy } from "lodash";
+import { partition, uniq, uniqBy } from "lodash";
 import {
   distinct,
   filter,
@@ -51,20 +51,20 @@ const actions = proxyReplaySubject<Observable<InMessages>, OutMessages>(
             (outMessages, inMessages, index) => ({
               actions: uniqBy(
                 outMessages.actions.concat(
-                  ...[
-                    {
-                      id: v4(),
-                      type: "seedAction" as const,
-                      data: {
-                        seed: inMessages.connect.data.seed,
-                      },
-                    },
-                  ].slice(0, Math.max(0, 1 - index)),
+                  index === 0
+                    ? {
+                        id: v4(),
+                        type: "seedAction" as const,
+                        data: inMessages.connect.data,
+                      }
+                    : [],
                   ...inMessages.actions,
                 ),
                 property("id"),
               ),
-              ports: outMessages.ports.concat(inMessages.connect.origin ?? []),
+              ports: uniq(
+                outMessages.ports.concat(inMessages.connect.origin ?? []),
+              ),
             }),
             {
               actions: new Array<MulticastActionMessage<any>>(),
