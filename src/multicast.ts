@@ -1,4 +1,4 @@
-import { partition, unionBy } from "lodash";
+import { partition, uniqBy } from "lodash";
 import {
   distinct,
   filter,
@@ -8,7 +8,6 @@ import {
   mergeMap,
   Observable,
   scan,
-  shareReplay,
 } from "rxjs";
 import { v4 } from "uuid";
 import { nonNullable, property } from "./lib";
@@ -50,7 +49,7 @@ const actions = proxyReplaySubject<Observable<InMessages>, OutMessages>(
         group.pipe(
           scan<InMessages, OutMessages>(
             (outMessages, inMessages, index) => ({
-              actions: unionBy(
+              actions: uniqBy(
                 outMessages.actions.concat(
                   ...[
                     {
@@ -94,7 +93,6 @@ self.addEventListener("connect", ({ ports }) => {
         ),
         exchangeWith<MulticastClientMessage, MulticastActionMessage<any>>(port),
         map((event) => ({ ...event, origin: port })),
-        shareReplay(),
         concat(),
         flatMap((messages) => {
           const [[connect], actions] = partition(
