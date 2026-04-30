@@ -1,18 +1,19 @@
-import { compact } from "lodash";
+import { partition, unionBy } from "lodash";
 import {
-  combineLatest,
+  distinct,
+  filter,
   groupBy,
   map,
   mergeAll,
   mergeMap,
   Observable,
-  partition,
-  startWith,
+  scan,
+  shareReplay,
 } from "rxjs";
 import { v4 } from "uuid";
-import { nonNullable } from "./lib";
+import { nonNullable, property } from "./lib";
 import {
-  concatLeft,
+  concat,
   exchangeWith,
   flatMap,
   MulticastActionMessage,
@@ -30,60 +31,59 @@ declare global {
   }
 }
 
-const actions = proxyReplaySubject<
-  Observable<
-    [MulticastConnectMessage<any>, MulticastActionMessage<any> | null]
-  >,
-  {
-    ports: MessagePort[];
-    action: MulticastActionMessage<any>;
-  }
->((messages) =>
-  messages.pipe(
-    mergeAll(),
-    groupBy(([connect]) => connect.data.key),
-    mergeMap((group) =>
-      group.pipe(
-        flatMap(([connect, action], index) =>
-          compact(
-            index
-              ? [action]
-              : [
-                  {
-                    id: v4(),
-                    type: "seedAction" as const,
-                    data: {
-                      seed: connect.data.seed,
+type InMessages = {
+  connect: MulticastConnectMessage;
+  actions: MulticastActionMessage<any>[];
+};
+
+type OutMessages = {
+  actions: MulticastActionMessage<any>[];
+  ports: MessagePort[];
+};
+
+const actions = proxyReplaySubject<Observable<InMessages>, OutMessages>(
+  (messages) =>
+    messages.pipe(
+      mergeAll(),
+      groupBy(({ connect }) => connect.data.key),
+      mergeMap((group) =>
+        group.pipe(
+          scan<InMessages, OutMessages>(
+            (outMessages, inMessages, index) => ({
+              actions: unionBy(
+                outMessages.actions.concat(
+                  ...[
+                    {
+                      id: v4(),
+                      type: "seedAction" as const,
+                      data: {
+                        seed: inMessages.connect.data.seed,
+                      },
                     },
-                  },
-                  action,
-                ],
+                  ].slice(0, Math.max(0, 1 - index)),
+                  ...inMessages.actions,
+                ),
+                property("id"),
+              ),
+              ports: outMessages.ports.concat(inMessages.connect.origin ?? []),
+            }),
+            {
+              actions: new Array<MulticastActionMessage<any>>(),
+              ports: new Array<MessagePort>(),
+            },
           ),
-        ),
-        concatLeft(),
-        flatMap((actions) =>
-          0 in actions
-            ? {
-                ports: actions.flatMap((action) => action.origin ?? []),
-                action: actions[0],
-              }
-            : [],
         ),
       ),
     ),
-  ),
 );
 
 self.addEventListener("connect", ({ ports }) => {
   for (const port of ports) {
     actions.next(
       actions.pipe(
-        flatMap(({ ports, action: { origin, ...message } }) =>
-          (message.type === "seedAction" || ports.includes(port)) &&
-          (!message.sameOrigin || origin === port)
-            ? message
-            : [],
-        ),
+        flatMap(({ ports, actions }) => (ports.includes(port) ? actions : [])),
+        distinct(property("id")),
+        filter((message) => !message.sameOrigin || message.origin === port),
         sequence(([action, previousAction]) =>
           action.type === "seedAction"
             ? action
@@ -94,13 +94,20 @@ self.addEventListener("connect", ({ ports }) => {
         ),
         exchangeWith<MulticastClientMessage, MulticastActionMessage<any>>(port),
         map((event) => ({ ...event, origin: port })),
-        (messages) =>
-          combineLatest(
-            partition(
-              messages.pipe(startWith(null)),
-              (message) => message?.type === "connect",
-            ),
-          ),
+        shareReplay(),
+        concat(),
+        flatMap((messages) => {
+          const [[connect], actions] = partition(
+            messages,
+            (message) => message.type === "connect",
+          );
+
+          if (connect != null) {
+            return [{ connect, actions }];
+          }
+
+          return [];
+        }),
       ),
     );
   }
