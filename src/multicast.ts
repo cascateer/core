@@ -1,6 +1,5 @@
-import { partition, uniq, uniqBy } from "lodash";
+import { partition, thru, uniq, uniqBy } from "lodash";
 import {
-  distinct,
   filter,
   groupBy,
   map,
@@ -8,10 +7,10 @@ import {
   mergeMap,
   Observable,
   scan,
-  shareReplay,
+  share,
 } from "rxjs";
 import { v4 } from "uuid";
-import { nonNullable, property } from "./lib";
+import { property } from "./lib";
 import {
   concat,
   exchangeWith,
@@ -74,7 +73,7 @@ const actions = proxyReplaySubject<Observable<InMessages>, OutMessages>(
           ),
         ),
       ),
-      shareReplay(),
+      share(),
     ),
 );
 
@@ -83,27 +82,23 @@ self.addEventListener("connect", ({ ports }) => {
     actions.next(
       actions.pipe(
         flatMap(({ ports, actions }) => (ports.includes(port) ? actions : [])),
-        distinct(property("id")),
+        // distinct(property("id")),
         filter((message) => !message.sameOrigin || message.origin === port),
         sequence(([action, previousAction]) =>
           action.type === "seedAction"
             ? action
-            : {
-                ...action,
-                previousId: nonNullable(previousAction).id,
-              },
+            : { ...action, previousId: previousAction!.id },
         ),
         exchangeWith<MulticastClientMessage, MulticastActionMessage<any>>(port),
         map((message) => ({ ...message, origin: port })),
         concat(),
-        flatMap((messages) => {
-          const [[connect], actions] = partition(
-            messages,
-            (message) => message.type === "connect",
-          );
-
-          return connect != null ? { connect, actions } : [];
-        }),
+        flatMap((messages) =>
+          thru(
+            partition(messages, (message) => message.type === "connect"),
+            ([[connect], actions]) =>
+              connect != null ? { connect, actions } : [],
+          ),
+        ),
       ),
     );
   }
