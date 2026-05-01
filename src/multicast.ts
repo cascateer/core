@@ -8,7 +8,7 @@ import {
   mergeMap,
   Observable,
   scan,
-  share,
+  shareReplay,
 } from "rxjs";
 import { v4 } from "uuid";
 import { nonNullable, property } from "./lib";
@@ -74,7 +74,7 @@ const actions = proxyReplaySubject<Observable<InMessages>, OutMessages>(
           ),
         ),
       ),
-      share(),
+      shareReplay(),
     ),
 );
 
