@@ -204,7 +204,6 @@ export class StoreProvider<Data> extends ExtendableStoreAdapter<
             actions
               .pipe(
                 mergeMap(async (event) => {
-                  console.log(event);
                   if (
                     event.type === "transformAction" &&
                     event.data.key === (await key)

@@ -1,4 +1,3 @@
-import { tap } from "lodash";
 import { concatMap, shareReplay, startWith, UnaryFunction } from "rxjs";
 import { v4 } from "uuid";
 import { ComputedSignal, ProxySubject } from "../observable";
@@ -91,9 +90,7 @@ export const multicast = <Seed>(
           data: { key, seed },
         }),
       ),
-      concatMap((message) =>
-        key.then((key) => tap(message({ key, id: v4() }), console.log)),
-      ),
+      concatMap((message) => key.then((key) => message({ key, id: v4() }))),
       exchangeWith<MulticastHostMessage, MulticastClientMessage>(
         new SharedWorker(new URL("../multicast.ts", import.meta.url), {
           type: "module",
