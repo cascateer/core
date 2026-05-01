@@ -1,5 +1,6 @@
-import { partition, thru, uniq } from "lodash";
+import { partition, thru, uniq, uniqBy } from "lodash";
 import {
+  distinct,
   filter,
   groupBy,
   map,
@@ -10,6 +11,7 @@ import {
   share,
 } from "rxjs";
 import { v4 } from "uuid";
+import { property } from "./lib";
 import {
   concat,
   exchangeWith,
@@ -48,15 +50,18 @@ const actions = proxyReplaySubject<Observable<InMessages>, OutMessages>(
         group.pipe(
           scan<InMessages, OutMessages>(
             (outMessages, inMessages, index) => ({
-              actions: outMessages.actions.concat(
-                index === 0
-                  ? {
-                      id: v4(),
-                      type: "seedAction" as const,
-                      data: inMessages.connect.data,
-                    }
-                  : [],
-                ...inMessages.actions,
+              actions: uniqBy(
+                outMessages.actions.concat(
+                  index === 0
+                    ? {
+                        id: v4(),
+                        type: "seedAction" as const,
+                        data: inMessages.connect.data,
+                      }
+                    : [],
+                  ...inMessages.actions,
+                ),
+                property("id"),
               ),
               ports: uniq(
                 outMessages.ports.concat(inMessages.connect.origin ?? []),
@@ -78,7 +83,7 @@ self.addEventListener("connect", ({ ports }) => {
     actions.next(
       actions.pipe(
         flatMap(({ ports, actions }) => (ports.includes(port) ? actions : [])),
-        // distinct(property("id")),
+        distinct(property("id")),
         filter((message) => !message.sameOrigin || message.origin === port),
         sequence(([action, previousAction]) =>
           action.type === "seedAction"
