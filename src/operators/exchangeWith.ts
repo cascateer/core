@@ -8,7 +8,10 @@ export const exchangeWith =
   (messages) =>
     new Observable<InMessage>((subscriber) => {
       fromEvent<MessageEvent<any>>(port, "message")
-        .pipe(map(property("data")), tap(console.log))
+        .pipe(
+          tap((message) => console.log("worker-in", message)),
+          map(property("data")),
+        )
         .subscribe(subscriber);
 
       port.start();
@@ -17,7 +20,9 @@ export const exchangeWith =
         unsubscribe: () => port.close(),
       });
 
-      return messages.subscribe({
-        next: (message) => port.postMessage(message),
-      });
+      return messages
+        .pipe(tap((message) => console.log("worker-out", message)))
+        .subscribe({
+          next: (message) => port.postMessage(message),
+        });
     });
