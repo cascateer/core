@@ -83,6 +83,7 @@ self.addEventListener("connect", ({ ports }) => {
   for (const port of ports) {
     actions.next(
       actions.pipe(
+        shareReplay(),
         flatMap(({ ports, actions }) => (ports.includes(port) ? actions : [])),
         distinct(property("id")),
         filter((message) => !message.sameOrigin || message.origin === port),
@@ -92,7 +93,6 @@ self.addEventListener("connect", ({ ports }) => {
             : { ...action, previousId: previousAction!.id },
         ),
         exchangeWith<MulticastClientMessage, MulticastActionMessage<any>>(port),
-        shareReplay(),
         map((message) => ({ ...message, origin: port })),
         concat(),
         flatMap((messages) =>
