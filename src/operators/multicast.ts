@@ -1,4 +1,4 @@
-import { concatMap, shareReplay, startWith, UnaryFunction } from "rxjs";
+import { concatMap, shareReplay, startWith, tap, UnaryFunction } from "rxjs";
 import { v4 } from "uuid";
 import { ComputedSignal, ProxySubject } from "../observable";
 import { Transform } from "../types";
@@ -96,6 +96,7 @@ export const multicast = <Seed>(
           type: "module",
         }).port,
       ),
+      tap((message) => console.log(message)),
       shareReplay({ refCount: false }),
     ),
   );

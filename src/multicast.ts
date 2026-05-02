@@ -9,6 +9,7 @@ import {
   Observable,
   scan,
   share,
+  tap,
 } from "rxjs";
 import { v4 } from "uuid";
 import { property } from "./lib";
@@ -93,6 +94,7 @@ self.addEventListener("connect", ({ ports }) => {
         exchangeWith<MulticastClientMessage, MulticastActionMessage<any>>(port),
         map((message) => ({ ...message, origin: port })),
         concat(),
+        tap((messages) => port.postMessage(messages)),
         flatMap((messages) =>
           thru(
             partition(messages, (message) => message.type === "connect"),
