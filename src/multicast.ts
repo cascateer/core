@@ -72,6 +72,7 @@ const actions = proxyReplaySubject<Observable<InMessages>, OutMessages>(
               ports: new Array<MessagePort>(),
             },
           ),
+          share(),
         ),
       ),
       share(),
