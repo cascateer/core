@@ -1,4 +1,4 @@
-import { fromEvent, map, Observable, OperatorFunction } from "rxjs";
+import { fromEvent, map, Observable, OperatorFunction, tap } from "rxjs";
 import { property } from "../lib";
 
 export const exchangeWith =
@@ -8,7 +8,7 @@ export const exchangeWith =
   (messages) =>
     new Observable<InMessage>((subscriber) => {
       fromEvent<MessageEvent<any>>(port, "message")
-        .pipe(map(property("data")))
+        .pipe(map(property("data")), tap(console.log))
         .subscribe(subscriber);
 
       port.start();
