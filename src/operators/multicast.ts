@@ -1,4 +1,4 @@
-import { concatMap, shareReplay, startWith, UnaryFunction } from "rxjs";
+import { concatMap, shareReplay, startWith, tap, UnaryFunction } from "rxjs";
 import { v4 } from "uuid";
 import { ComputedSignal, ProxySubject } from "../observable";
 import { Transform } from "../types";
@@ -91,6 +91,7 @@ export const multicast = <Seed>(
         }),
       ),
       concatMap((message) => key.then((key) => message({ key, id: v4() }))),
+      tap((message) => console.log("out", message)),
       exchangeWith<MulticastHostMessage, MulticastClientMessage>(
         new SharedWorker(new URL("../multicast.ts", import.meta.url), {
           type: "module",
