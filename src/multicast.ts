@@ -9,6 +9,7 @@ import {
   Observable,
   scan,
   share,
+  tap,
 } from "rxjs";
 import { v4 } from "uuid";
 import { property } from "./lib";
@@ -100,6 +101,10 @@ self.addEventListener("connect", ({ ports }) => {
               connect != null ? { connect, actions } : [],
           ),
         ),
+        tap({
+          next: (value) => console.log("worker-chunk", value),
+          subscribe: () => console.log("worker-subscribed"),
+        }),
       ),
     );
   }
