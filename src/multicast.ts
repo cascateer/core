@@ -9,7 +9,6 @@ import {
   Observable,
   scan,
   share,
-  shareReplay,
 } from "rxjs";
 import { v4 } from "uuid";
 import { property } from "./lib";
@@ -83,7 +82,6 @@ self.addEventListener("connect", ({ ports }) => {
   for (const port of ports) {
     actions.next(
       actions.pipe(
-        shareReplay(),
         flatMap(({ ports, actions }) => (ports.includes(port) ? actions : [])),
         distinct(property("id")),
         filter((message) => !message.sameOrigin || message.origin === port),
