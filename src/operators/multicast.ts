@@ -97,6 +97,7 @@ export const multicast = <Seed>(
           type: "module",
         }).port,
       ),
+      tap((message) => console.log("in", message)),
       shareReplay({ refCount: false }),
     ),
   );
