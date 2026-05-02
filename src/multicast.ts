@@ -8,7 +8,7 @@ import {
   mergeMap,
   Observable,
   scan,
-  share,
+  shareReplay,
 } from "rxjs";
 import { v4 } from "uuid";
 import { property } from "./lib";
@@ -74,7 +74,7 @@ const actions = proxyReplaySubject<Observable<InMessages>, OutMessages>(
           ),
         ),
       ),
-      share(),
+      shareReplay(),
     ),
 );
 
@@ -91,6 +91,7 @@ self.addEventListener("connect", ({ ports }) => {
             : { ...action, previousId: previousAction!.id },
         ),
         exchangeWith<MulticastClientMessage, MulticastActionMessage<any>>(port),
+        shareReplay(),
         map((message) => ({ ...message, origin: port })),
         concat(),
         flatMap((messages) =>
