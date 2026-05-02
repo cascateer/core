@@ -1,6 +1,5 @@
-import { Dictionary } from "lodash";
-import { UnaryFunction } from "rxjs";
-import { Future } from "../observable";
+import { Dictionary, once } from "lodash";
+import { AsyncSubject, lastValueFrom, UnaryFunction } from "rxjs";
 import { keys } from "./keys";
 
 export type Extend<T, U> = Omit<T, keyof U> & U;
@@ -8,12 +7,15 @@ export type Extend<T, U> = Omit<T, keyof U> & U;
 export class ExtendableDictionary<T, U extends Dictionary<T>> {
   constructor(
     public currentValue: U,
-    private value = new Future<Dictionary<T>>(),
+    private value = new AsyncSubject<Dictionary<T>>(),
   ) {}
 
-  complete(): U {
-    return this.value.completeWith(this.currentValue);
-  }
+  complete = once((): U => {
+    this.value.next(this.currentValue);
+    this.value.complete();
+
+    return this.currentValue;
+  });
 
   extend<V extends Dictionary<T>>(
     value: (
@@ -30,7 +32,7 @@ export class ExtendableDictionary<T, U extends Dictionary<T>> {
         ...value(this.currentValue)({
           property: (constructor) => {
             const property = constructor(
-              this.value.once(
+              lastValueFrom(this.value).then(
                 (value) =>
                   new Promise<string>((resolve, reject) => {
                     for (const key of keys(value)) {
