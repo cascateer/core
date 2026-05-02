@@ -1,6 +1,6 @@
 import { OperatorFunction, scan } from "rxjs";
 
-export const concat =
+export const accumulate =
   <T>(): OperatorFunction<T | T[], T[]> =>
   (source) =>
     source.pipe(scan((acc, curr) => acc.concat(curr), new Array<T>()));

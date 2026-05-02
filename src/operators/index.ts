@@ -1,4 +1,4 @@
-export { concat } from "./concat";
+export { accumulate } from "./accumulate";
 export { every } from "./every";
 export { exchangeWith } from "./exchangeWith";
 export { flatMap } from "./flatMap";

@@ -13,7 +13,7 @@ import {
 import { v4 } from "uuid";
 import { property } from "./lib";
 import {
-  concat,
+  accumulate,
   exchangeWith,
   flatMap,
   MulticastActionMessage,
@@ -93,7 +93,7 @@ self.addEventListener("connect", ({ ports }) => {
         map(({ origin, ...message }) => message),
         exchangeWith<MulticastClientMessage, MulticastActionMessage<any>>(port),
         map((message) => ({ ...message, origin: port })),
-        concat(),
+        accumulate(),
         flatMap((messages) =>
           thru(
             partition(messages, (message) => message.type === "connect"),

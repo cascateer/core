@@ -4,7 +4,7 @@ import { Observable } from "rxjs/internal/Observable";
 import { ObservableInput } from "rxjs/internal/types";
 import { memoizeHashed } from "./lib/memoizeHashed";
 import { ProxyObservable } from "./observable";
-import { concat, every, some } from "./operators";
+import { accumulate, every, some } from "./operators";
 
 export interface Effect<Args, Result> extends UnaryFunction<
   Args,
@@ -51,7 +51,7 @@ export class ProxyEffectInterceptor extends ReplaySubject<
     return (args) =>
       new ProxyObservable(effect(args), () =>
         this.pipe(
-          concat(),
+          accumulate(),
           switchMap((sources) =>
             combineLatest(sources.map((source) => source.pending)),
           ),
