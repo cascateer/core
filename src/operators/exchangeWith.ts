@@ -23,6 +23,6 @@ export const exchangeWith =
       return messages
         .pipe(tap((message) => console.log("exchange-out", message)))
         .subscribe({
-          next: (message) => port.postMessage(JSON.stringify(message)),
+          next: (message) => port.postMessage(message),
         });
     });
