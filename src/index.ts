@@ -3,7 +3,7 @@ export { App } from "./app";
 export { createComponent } from "./component";
 export { defineCustomProperties } from "./dom";
 export { createElement, createFragment } from "./jsx-runtime";
-export { BrandedSerializer, Serializable } from "./serializable";
+export { Serializable, type BrandedSerializer } from "./serializable";
 export { createSlice } from "./slice";
 export { type StoreEffect } from "./store";
 export { type TerminalEffect } from "./terminal";
