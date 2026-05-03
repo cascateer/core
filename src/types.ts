@@ -68,6 +68,8 @@ export interface Action<Args, Result> extends UnaryFunction<
 
 export type MaybeArray<T> = T | T[];
 
+export type MaybePromise<T> = T | Promise<T>;
+
 export type MaybeObservable<T> = T | Observable<T>;
 
 export type MaybeObservableInput<T> = T | ObservableInput<T>;
