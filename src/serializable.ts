@@ -1,4 +1,4 @@
-import { assign, Dictionary, get, isObject, isString } from "lodash";
+import { Dictionary, get, isObject, isString } from "lodash";
 import { Brand, identity } from "ts-brand";
 import { v4 } from "uuid";
 
@@ -17,12 +17,12 @@ interface SerializableConstructor<T, O> {
   fromObject(obj: O): T;
 }
 
-export abstract class Serializable<O> {
+export abstract class Serializable<O extends object> {
   static readonly importMap: Dictionary<
     SerializableConstructor<unknown, unknown>
   > = {};
 
-  static async fromJSON<T, O>(value: string): Promise<T> {
+  static async fromJSON<T, O extends object>(value: string): Promise<T> {
     const obj: O = JSON.parse(value);
 
     if (isObject(obj) && "$ref" in obj && isString(obj.$ref)) {
@@ -40,7 +40,7 @@ export abstract class Serializable<O> {
     throw new Error(`${value} deserialization failed`);
   }
 
-  static toJSON<T, O>(
+  static toJSON<T, O extends object>(
     ctor: SerializableConstructor<T, O>,
     value: Serializable<O>,
   ): BrandedSerializer<O> {
@@ -49,12 +49,10 @@ export abstract class Serializable<O> {
 
     this[importMap][id] = ctor;
 
-    return identity<BrandedSerializer<O>>(
-      () =>
-        assign(value.toObject(), {
-          $ref: [`${import.meta.url}#`, this.name, importMap, id].join("/"),
-        }) as SerializerResult<O>,
-    );
+    return identity<BrandedSerializer<O>>(() => ({
+      ...value.toObject(),
+      $ref: [`${import.meta.url}#`, this.name, importMap, id].join("/"),
+    }));
   }
 
   abstract toObject(): O;
