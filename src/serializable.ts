@@ -1,9 +1,11 @@
-import { Dictionary, get, isObject, isString } from "lodash";
+import { assign, Dictionary, get, isObject, isString } from "lodash";
 import { Brand, identity } from "ts-brand";
 import { v4 } from "uuid";
 
+type SerializerResult<O> = O & { $ref: string };
+
 export interface Serializer<O> {
-  (): O & { $ref: string };
+  (): SerializerResult<O>;
 }
 
 enum SerializerBrand {}
@@ -47,10 +49,12 @@ export abstract class Serializable<O> {
 
     this[importMap][id] = ctor;
 
-    return identity<BrandedSerializer<O>>(() => ({
-      ...value.toObject(),
-      $ref: [`${import.meta.url}#`, this.name, importMap, id].join("/"),
-    }));
+    return identity<BrandedSerializer<O>>(
+      () =>
+        assign(value.toObject(), {
+          $ref: [`${import.meta.url}#`, this.name, importMap, id].join("/"),
+        }) as SerializerResult<O>,
+    );
   }
 
   abstract toObject(): O;
