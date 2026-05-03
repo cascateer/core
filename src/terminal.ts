@@ -79,24 +79,27 @@ export class ExtendableTerminalAdapter<
   ) {
     return new ExtendableTerminalAdapter(
       this.context,
-      this.extendableEffects.extend((currentEffects) => () => {
-        const interceptor = new ProxyEffectInterceptor();
-        const source = {
-          store: {
-            effects: asStoreEffects(this.context.store.signals),
-          },
-          api: {
-            effects: interceptor.intercept(this.context.api.effects),
-          },
-          terminal: {
-            effects: interceptor.intercept(currentEffects),
-          },
-        };
+      this.extendableEffects.extend(
+        (currentEffects) => () =>
+          effects({
+            effect: (constructor) => {
+              const interceptor = new ProxyEffectInterceptor();
+              const source = {
+                store: {
+                  effects: asStoreEffects(this.context.store.signals),
+                },
+                api: {
+                  effects: interceptor.intercept(this.context.api.effects),
+                },
+                terminal: {
+                  effects: interceptor.intercept(currentEffects),
+                },
+              };
 
-        return effects({
-          effect: (constructor) => interceptor.proxy(constructor(source)),
-        });
-      }),
+              return interceptor.proxy(constructor(source));
+            },
+          }),
+      ),
       this.extendableActions,
     );
   }

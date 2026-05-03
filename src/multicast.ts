@@ -1,17 +1,27 @@
-import { memoize, thru } from "lodash";
-import { mergeAll, Observable, startWith, tap } from "rxjs";
-import { v4 } from "uuid";
-import { nonNullable, property } from "./lib";
-import { Future } from "./observable";
+import { partition, thru, uniq, uniqBy } from "lodash";
 import {
+  distinct,
+  filter,
+  groupBy,
+  map,
+  mergeAll,
+  mergeMap,
+  Observable,
+  scan,
+  share,
+} from "rxjs";
+import { v4 } from "uuid";
+import { property } from "./lib";
+import {
+  accumulate,
   exchangeWith,
   flatMap,
   MulticastActionMessage,
   MulticastClientMessage,
-  MulticastConnectMessageData,
   proxyReplaySubject,
   sequence,
 } from "./operators";
+import { MulticastConnectMessage } from "./operators/multicast";
 
 declare var self: ServiceWorkerGlobalScope;
 
@@ -21,59 +31,79 @@ declare global {
   }
 }
 
-const memoizedSliceActions = memoize(
-  <Seed>({ seed }: MulticastConnectMessageData<Seed>) =>
-    proxyReplaySubject<MulticastActionMessage<any>>((actions) =>
-      actions.pipe(
-        startWith({
-          id: v4(),
-          type: "seedAction" as const,
-          data: {
-            seed,
-          },
-        }),
+type InMessages = {
+  connect: MulticastConnectMessage;
+  actions: MulticastActionMessage<any>[];
+};
+
+type OutMessages = {
+  actions: MulticastActionMessage<any>[];
+  ports: MessagePort[];
+};
+
+const actions = proxyReplaySubject<Observable<InMessages>, OutMessages>(
+  (messages) =>
+    messages.pipe(
+      mergeAll(),
+      groupBy(({ connect }) => connect.data.key),
+      mergeMap((group) =>
+        group.pipe(
+          scan<InMessages, OutMessages>(
+            (outMessages, inMessages, index) => ({
+              actions: uniqBy(
+                outMessages.actions.concat(
+                  index === 0
+                    ? {
+                        id: v4(),
+                        type: "seedAction" as const,
+                        data: inMessages.connect.data,
+                      }
+                    : [],
+                  ...inMessages.actions,
+                ),
+                property("id"),
+              ),
+              ports: uniq(
+                outMessages.ports.concat(inMessages.connect.origin ?? []),
+              ),
+            }),
+            {
+              actions: new Array<MulticastActionMessage<any>>(),
+              ports: new Array<MessagePort>(),
+            },
+          ),
+        ),
       ),
+      share(),
     ),
-  property("key"),
 );
 
 self.addEventListener("connect", ({ ports }) => {
   for (const port of ports) {
-    thru(
-      new Future<Observable<MulticastActionMessage<any>>>(),
-      (sliceActions) =>
-        proxyReplaySubject<MulticastActionMessage<any>, MulticastClientMessage>(
-          (actions) =>
-            sliceActions.pipe(
-              mergeAll(),
-              flatMap(({ origin, ...message }) =>
-                !message.sameOrigin || origin === port ? message : [],
-              ),
-              sequence(([action, previousAction]) =>
-                action.type === "seedAction"
-                  ? action
-                  : {
-                      ...action,
-                      previousId: nonNullable(previousAction).id,
-                    },
-              ),
-              exchangeWith<MulticastClientMessage, MulticastActionMessage<any>>(
-                port,
-              ),
-              flatMap((event) => {
-                if (event.type === "connect") {
-                  actions.subscribe(
-                    sliceActions.completeWith(memoizedSliceActions(event.data)),
-                  );
-
-                  return [];
-                }
-
-                return { ...event, origin: port };
-              }),
-              tap(actions),
-            ),
+    actions.next(
+      actions.pipe(
+        flatMap(({ ports, actions }) => (ports.includes(port) ? actions : [])),
+        distinct(property("id")),
+        filter((message) => !message.sameOrigin || message.origin === port),
+        sequence(([action, previousAction]) =>
+          action.type === "seedAction"
+            ? action
+            : { ...action, previousId: previousAction!.id },
         ),
-    ).subscribe();
+        map(({ origin, ...message }) => message),
+        exchangeWith<MulticastClientMessage, MulticastActionMessage<any>>(port),
+        map((message) => ({ ...message, origin: port })),
+        accumulate(),
+        flatMap((messages) =>
+          thru(
+            partition(messages, (message) => message.type === "connect"),
+            ([[connect], actions]) =>
+              connect != null ? { connect, actions } : [],
+          ),
+        ),
+      ),
+    );
   }
 });
+
+actions.subscribe();

@@ -54,7 +54,7 @@ export class Signal<T> extends ProxyObservable<T> {
     enumerator?: SignalEnumerator<T>;
     reflector?: SignalReflector<T>;
   }) {
-    super(value, identity);
+    super(value);
 
     this.enumerator = enumerator;
     this.reflector = reflector;

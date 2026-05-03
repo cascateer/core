@@ -4,12 +4,8 @@ import {
   intersectionWith,
   isEqual,
   isFunction,
-  memoize,
-  thru,
 } from "lodash";
-import objectHash from "object-hash";
 import {
-  BehaviorSubject,
   combineLatest,
   filter,
   finalize,
@@ -24,6 +20,7 @@ import {
   UnaryFunction,
 } from "rxjs";
 import { asObservable, ExtendableDictionary, property } from "./lib";
+import { memoizeHashed } from "./lib/memoizeHashed";
 import { ProxyObservable } from "./observable";
 import { Action, MaybeArray, MaybeObservable, ProxyEffect } from "./types";
 
@@ -50,39 +47,30 @@ class Memoizable<Args, Result> {
     this.tags = isFunction(tags) ? tags : constant([tags ?? []].flat());
 
     this.subscribe = (invalidatedTags) => {
-      const memoizedEffect: ProxyEffect<Args, Result> = memoize(
+      const memoizedEffect: ProxyEffect<Args, Result> = memoizeHashed(
         (args) =>
-          thru(
-            new BehaviorSubject(false),
-            (pending) =>
-              new ProxyObservable(this.predicate(args), (target) => ({
-                value: target.pipe(
-                  tap({
-                    subscribe: () => pending.next(true),
-                  }),
-                  finalize(() => pending.next(false)),
-                  repeat({
-                    delay: () =>
-                      combineLatest([
-                        memoizedEffect(args).pipe(
-                          map((result) => this.tags(args, result)),
-                        ),
-                        invalidatedTags,
-                      ]).pipe(
-                        filter(([tags, invalidatedTags]) =>
-                          isEqual(
-                            tags,
-                            intersectionWith(tags, invalidatedTags),
-                          ),
-                        ),
-                      ),
-                  }),
-                  shareReplay({ bufferSize: 1, refCount: false }),
-                ),
-                pending,
-              })),
+          new ProxyObservable((pending) =>
+            this.predicate(args).pipe(
+              tap({
+                subscribe: () => pending.next(true),
+              }),
+              finalize(() => pending.next(false)),
+              repeat({
+                delay: () =>
+                  combineLatest([
+                    memoizedEffect(args).pipe(
+                      map((result) => this.tags(args, result)),
+                    ),
+                    invalidatedTags,
+                  ]).pipe(
+                    filter(([tags, invalidatedTags]) =>
+                      isEqual(tags, intersectionWith(tags, invalidatedTags)),
+                    ),
+                  ),
+              }),
+              shareReplay({ bufferSize: 1, refCount: false }),
+            ),
           ),
-        (args) => objectHash(args ?? null),
       );
 
       return memoizedEffect;
