@@ -1,15 +1,14 @@
-import { Dictionary, isObject, isString } from "lodash";
+import { Dictionary, get, isObject, isString } from "lodash";
 import { Brand, identity } from "ts-brand";
 import { v4 } from "uuid";
-import { Accessor } from "./lib/accessor";
 
-interface Serializer<O> {
+export interface Serializer<O> {
   (): O & { $ref: string };
 }
 
 enum SerializerBrand {}
 
-type BrandedSerializer<O> = Brand<Serializer<O>, SerializerBrand>;
+export type BrandedSerializer<O> = Brand<Serializer<O>, SerializerBrand>;
 
 interface SerializableConstructor<T, O> {
   name: string;
@@ -27,26 +26,30 @@ export abstract class Serializable<O> {
     if (isObject(obj) && "$ref" in obj && isString(obj.$ref)) {
       const [url, path] = obj.$ref.split(/#\/?/);
 
-      return import(url).then((module) =>
-        new Accessor(module)
-          .get<SerializableConstructor<T, O>>(...path.split("/"))
-          .value.fromObject(obj),
-      );
+      if (url != null && path != null) {
+        return import(url).then((module) =>
+          (
+            get(module, path.split("/")) as SerializableConstructor<T, O>
+          ).fromObject(obj),
+        );
+      }
     }
+
+    throw new Error(`${value} deserialization failed`);
   }
 
   static toJSON<T, O>(
     ctor: SerializableConstructor<T, O>,
     value: Serializable<O>,
   ): BrandedSerializer<O> {
-    const $ref = new Accessor(this, `${import.meta.url}#`, this.name)
-      .get("importMap")
-      .set(v4(), ctor)
-      .path.join("/");
+    const importMap = "importMap" satisfies keyof typeof Serializable;
+    const id = v4();
+
+    this[importMap][id] = ctor;
 
     return identity<BrandedSerializer<O>>(() => ({
       ...value.toObject(),
-      $ref,
+      $ref: [`${import.meta.url}#`, this.name, importMap, id].join("/"),
     }));
   }
 
