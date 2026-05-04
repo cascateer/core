@@ -18,7 +18,10 @@ export class Square implements Serializable<SquareObject> {
   }
 
   toObject(): SquareObject {
-    return { x: this.x, y: this.y };
+    return {
+      x: this.x,
+      y: this.y,
+    };
   }
 
   toJSON: BrandedSerializer<SquareObject> = Serializable.toJSON(Square, this);
