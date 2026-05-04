@@ -1,8 +1,11 @@
-import { Dictionary, get, isObject, isString } from "lodash";
+import { Dictionary, get } from "lodash";
 import { Brand, identity } from "ts-brand";
 import { v4 } from "uuid";
 
-type SerializerResult<O> = O & { $ref: string };
+interface SerializerResult<O> {
+  value: O;
+  $ref: string;
+}
 
 export interface Serializer<O> {
   (): SerializerResult<O>;
@@ -17,30 +20,28 @@ interface SerializableConstructor<T, O> {
   fromObject(obj: O): T;
 }
 
-export abstract class Serializable<O extends object> {
+export abstract class Serializable<O> {
   static readonly importMap: Dictionary<
     SerializableConstructor<unknown, unknown>
   > = {};
 
-  static async fromJSON<T, O extends object>(value: string): Promise<T> {
-    const obj: O = JSON.parse(value);
+  static async fromJSON<T, O>(json: string): Promise<T> {
+    const { $ref, value }: SerializerResult<O> = JSON.parse(json);
 
-    if (isObject(obj) && "$ref" in obj && isString(obj.$ref)) {
-      const [url, path] = obj.$ref.split(/#\/?/);
+    const [url, path] = $ref.split(/#\/?/);
 
-      if (url != null && path != null) {
-        return import(url).then((module) =>
-          (
-            get(module, path.split("/")) as SerializableConstructor<T, O>
-          ).fromObject(obj),
-        );
-      }
+    if (url != null && path != null) {
+      return import(url).then((module) =>
+        (
+          get(module, path.split("/")) as SerializableConstructor<T, O>
+        ).fromObject(value),
+      );
     }
 
-    throw new Error(`${value} deserialization failed`);
+    throw new Error(`${json} deserialization failed`);
   }
 
-  static toJSON<T, O extends object>(
+  static toJSON<T, O>(
     ctor: SerializableConstructor<T, O>,
     value: Serializable<O>,
   ): BrandedSerializer<O> {
@@ -50,7 +51,7 @@ export abstract class Serializable<O extends object> {
     this[importMap][id] = ctor;
 
     return identity<BrandedSerializer<O>>(() => ({
-      ...value.toObject(),
+      value: value.toObject(),
       $ref: [`${import.meta.url}#`, this.name, importMap, id].join("/"),
     }));
   }
