@@ -16,7 +16,7 @@ import {
   MulticastSubject,
   sequence,
 } from "./operators";
-import { Action, MaybePromise, Transform } from "./types";
+import { Action, Transform } from "./types";
 
 export type StoreEffect<Result> = () => Signal<Result>;
 
@@ -69,7 +69,7 @@ export class ExtendableStoreAdapter<
             },
             void
           >;
-          register: UnaryFunction<(args: any) => Promise<Transform<any>>, void>;
+          register: UnaryFunction<(args: any) => Transform<any>, void>;
         }
       >;
     },
@@ -114,7 +114,7 @@ export class ExtendableStoreAdapter<
                     ? T
                     : never,
                 >(
-                  predicate: UnaryFunction<Args, MaybePromise<Transform<T>>>,
+                  predicate: UnaryFunction<Args, Transform<T>>,
                   config?: { sameOrigin?: boolean },
                 ) => Action<Args, any>;
               };
@@ -141,8 +141,8 @@ export class ExtendableStoreAdapter<
                       (signal) => ({
                         update: (predicate, config = {}) =>
                           thru(this.context.transform(key), (transform) => {
-                            transform.register(async (args) =>
-                              signal.reflector.predicate(await predicate(args)),
+                            transform.register((args) =>
+                              signal.reflector.predicate(predicate(args)),
                             );
 
                             return (args) =>
@@ -210,9 +210,7 @@ export class StoreProvider<Data> extends ExtendableStoreAdapter<
                   ) {
                     return {
                       ...event,
-                      predicate: await transform(
-                        JSON.parse(event.data.args ?? null),
-                      ),
+                      predicate: transform(JSON.parse(event.data.args ?? null)),
                       callback: callbacks.get(event.id),
                     };
                   }
