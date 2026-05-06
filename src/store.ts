@@ -208,6 +208,7 @@ export class StoreProvider<Data> extends ExtendableStoreAdapter<
                     event.type === "transformAction" &&
                     event.data.key === (await key)
                   ) {
+                    console.log(event.data.args);
                     return {
                       ...event,
                       predicate: await transform(JSON.parse(event.data.args)),
