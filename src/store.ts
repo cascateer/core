@@ -174,7 +174,7 @@ export class StoreProvider<Data> extends ExtendableStoreAdapter<
           event.type === "seedAction"
             ? {
                 ...event,
-                predicate: constant(event.data.seed),
+                predicate: constant(JSON.parse(event.data.seed)),
               }
             : [],
         ),
@@ -194,7 +194,7 @@ export class StoreProvider<Data> extends ExtendableStoreAdapter<
                   type: "transformAction",
                   data: {
                     key: await key,
-                    args,
+                    args: JSON.stringify(args),
                   },
                   sameOrigin,
                 }
@@ -210,7 +210,7 @@ export class StoreProvider<Data> extends ExtendableStoreAdapter<
                   ) {
                     return {
                       ...event,
-                      predicate: await transform(event.data.args),
+                      predicate: await transform(JSON.parse(event.data.args)),
                       callback: callbacks.get(event.id),
                     };
                   }

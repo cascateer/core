@@ -18,14 +18,14 @@ interface MulticastActions<Data> {
   seedAction: {
     predicate: () => Data;
     data: {
-      seed: Data;
+      seed: string;
     };
   };
   transformAction: {
     predicate: Transform<Data>;
     data: {
       key: string;
-      args: unknown;
+      args: string;
     };
   };
 }
@@ -52,14 +52,14 @@ export type MulticastAction<
     };
   }[Type];
 
-export interface MulticastConnectMessageData<Seed> {
+export interface MulticastConnectMessageData {
   key: string;
-  seed: Seed;
+  seed: string;
 }
 
-export type MulticastConnectMessage<Seed = any> = MulticastBaseMessage<
+export type MulticastConnectMessage = MulticastBaseMessage<
   "connect",
-  MulticastConnectMessageData<Seed>
+  MulticastConnectMessageData
 >;
 
 export type MulticastHostMessage = MulticastActionMessage<any>;
@@ -87,7 +87,10 @@ export const multicast = <Seed>(
         ({ key, id }): MulticastConnectMessage => ({
           id,
           type: "connect",
-          data: { key, seed },
+          data: {
+            key,
+            seed: JSON.stringify(seed),
+          },
         }),
       ),
       concatMap((message) => key.then((key) => message({ key, id: v4() }))),
