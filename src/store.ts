@@ -16,6 +16,7 @@ import {
   MulticastSubject,
   sequence,
 } from "./operators";
+import { Serializable } from "./serializable";
 import { Action, Transform } from "./types";
 
 export type StoreEffect<Result> = () => Signal<Result>;
@@ -170,14 +171,15 @@ export class StoreProvider<Data> extends ExtendableStoreAdapter<
     >();
     const seedActions: Observable<MulticastAction<Data, "seedAction">> =
       actions.pipe(
-        flatMap((event) =>
+        mergeMap(async (event) =>
           event.type === "seedAction"
             ? {
                 ...event,
-                predicate: constant(JSON.parse(event.data.seed)),
+                predicate: constant(await Serializable.parse(event.data.seed)),
               }
-            : [],
+            : Promise.resolve([]),
         ),
+        flatMap(identity),
       );
 
     const callbacks = new Map<string, UnaryFunction<unknown, void>>();
@@ -210,7 +212,9 @@ export class StoreProvider<Data> extends ExtendableStoreAdapter<
                   ) {
                     return {
                       ...event,
-                      predicate: transform(JSON.parse(event.data.args ?? null)),
+                      predicate: transform(
+                        await Serializable.parse(event.data.args ?? null),
+                      ),
                       callback: callbacks.get(event.id),
                     };
                   }
