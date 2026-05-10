@@ -1,5 +1,4 @@
 import { Dictionary, get } from "lodash";
-import { concatAll, defer, endWith, from, lastValueFrom } from "rxjs";
 import { Brand, identity } from "ts-brand";
 import { v4 } from "uuid";
 
@@ -61,27 +60,31 @@ export abstract class Serializable<O> {
     const nodes: { key: string; value: any; parent?: any }[] = [];
     const obj = JSON.parse(text, (key, value) => {
       for (const node of nodes) {
-        if (node.key && value[node.key] === node.value) {
+        if (value[node.key] === node.value) {
           node.parent = value;
         }
       }
 
-      nodes.unshift({ key, value });
+      nodes.push({ key, value });
 
       return value;
     });
 
-    return lastValueFrom(
-      from(
-        nodes.toReversed().map((node) =>
-          defer(() =>
+    return nodes
+      .reduce(
+        (acc, node, index, { length }) =>
+          acc.then(() =>
             Serializable.fromJSON(JSON.stringify(node.value))
               .catch(() => node.value)
-              .then((value) => node.key && (node.parent[node.key] = value)),
+              .then((value) => {
+                if (index < length - 1) {
+                  node.parent[node.key] = value;
+                }
+              }),
           ),
-        ),
-      ).pipe(concatAll(), endWith(obj)),
-    );
+        Promise.resolve(),
+      )
+      .then(() => obj);
   }
 
   abstract toObject(): O;
