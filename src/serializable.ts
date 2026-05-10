@@ -69,21 +69,21 @@ export abstract class Serializable<O> {
       return value;
     });
 
-    return nodes
-      .reduce(
-        (acc, node) =>
-          acc.then(() =>
-            Serializable.fromJSON(JSON.stringify(node.value))
-              .catch(() => node.value)
-              .then((value) => {
-                if (node.parent != null) {
-                  node.parent[node.key] = value;
-                }
-              }),
-          ),
-        Promise.resolve(),
-      )
-      .then(() => obj);
+    return nodes.reduce(
+      (acc, node) =>
+        acc.then(() =>
+          Serializable.fromJSON(JSON.stringify(node.value))
+            .catch(() => node.value)
+            .then((value) => {
+              if (node.parent != null) {
+                node.parent[node.key] = value;
+              }
+
+              return value;
+            }),
+        ),
+      Promise.resolve(obj),
+    );
   }
 
   abstract toObject(): O;
