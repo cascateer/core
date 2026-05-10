@@ -26,9 +26,8 @@ export abstract class Serializable<O> {
   > = {};
 
   static async fromJSON<T, O>(json: string): Promise<T> {
-    const { $ref, value }: SerializerResult<O> = JSON.parse(json);
-
-    const [url, path] = $ref.split(/#\/?/);
+    const { $ref, value }: SerializerResult<O> = JSON.parse(json),
+      [url, path] = $ref.split(/#\/?/);
 
     if (url != null && path != null) {
       return import(url).then((module) =>
@@ -72,12 +71,12 @@ export abstract class Serializable<O> {
 
     return nodes
       .reduce(
-        (acc, node, index, { length }) =>
+        (acc, node) =>
           acc.then(() =>
             Serializable.fromJSON(JSON.stringify(node.value))
               .catch(() => node.value)
               .then((value) => {
-                if (index < length - 1) {
+                if (node.parent != null) {
                   node.parent[node.key] = value;
                 }
               }),
