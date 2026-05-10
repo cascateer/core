@@ -77,9 +77,7 @@ export abstract class Serializable<O> {
             Serializable.fromJSON(JSON.stringify(node.value))
               .catch(() => node.value)
               .then((value) => {
-                if (index < length - 1) {
-                  node.parent[node.key] = value;
-                }
+                node.parent[node.key] = value;
               }),
           ),
         Promise.resolve(),
