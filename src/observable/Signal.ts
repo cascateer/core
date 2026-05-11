@@ -134,10 +134,10 @@ export class Signal<T> extends ProxyObservable<T> {
   }
 
   list<U>(
-    iteratee: UnaryFunction<Signal<EnumerableItem<T>>, U>,
+    iteratee: (item: Signal<EnumerableItem<T>>, index: number) => U,
   ): Observable<U[]> {
-    const memoizedIteratee = memoize<UnaryFunction<PropertyKey, U>>((key) =>
-      iteratee(this.item(key)),
+    const memoizedIteratee = memoize<(key: PropertyKey, index: number) => U>(
+      (key, index) => iteratee(this.item(key), index),
     );
 
     return this.pipe(
