@@ -70,8 +70,8 @@ export abstract class Serializable<O> {
     });
 
     return nodes.reduce(
-      (acc, node) =>
-        acc.then(() =>
+      (value, node) =>
+        value.then(() =>
           Serializable.fromJSON(JSON.stringify(node.value))
             .catch(() => node.value)
             .then((value) => {
