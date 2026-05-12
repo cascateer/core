@@ -79,6 +79,8 @@ export abstract class Serializable<O> {
                 node.parent[node.key] = value;
               }
 
+              console.log(value, node);
+
               return value;
             }),
         ),
