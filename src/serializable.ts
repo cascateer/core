@@ -25,19 +25,21 @@ export abstract class Serializable<O> {
     SerializableConstructor<unknown, unknown>
   > = {};
 
-  static async fromJSON<T, O>(json: string): Promise<T> {
+  static fromJSON<T, O>(json: string): T {
     const { $ref, value }: SerializerResult<O> = JSON.parse(json),
-      [url, path] = $ref.split(/#\/?/);
+      [url, pointer] = $ref.split(/#\/?/);
 
-    if (url != null && path != null) {
-      return import(url).then((module) =>
-        (
-          get(module, path.split("/")) as SerializableConstructor<T, O>
-        ).fromObject(value),
-      );
+    if (url === import.meta.url && pointer != null) {
+      const path = pointer.split("/");
+
+      if (path[0] === Serializable.name) {
+        return (
+          get(Serializable, path.slice(1)) as SerializableConstructor<T, O>
+        ).fromObject(value);
+      }
     }
 
-    throw new Error(`${json} deserialization failed`);
+    return JSON.parse(json);
   }
 
   static toJSON<T, O>(
@@ -55,36 +57,9 @@ export abstract class Serializable<O> {
     }));
   }
 
-  static async parse(text: string) {
-    const nodes: { key: string; value: any; parent?: any }[] = [];
-    const obj = JSON.parse(text, (key, value) => {
-      for (const node of nodes) {
-        if (value[node.key] === node.value) {
-          node.parent = value;
-        }
-      }
-
-      nodes.push({ key, value });
-
-      return value;
-    });
-
-    return nodes.reduce(
-      (value, node) =>
-        value.then(() =>
-          Serializable.fromJSON(JSON.stringify(node.value))
-            .catch(() => node.value)
-            .then((value) => {
-              if (node.parent != null) {
-                node.parent[node.key] = value;
-              }
-
-              console.log(value, node);
-
-              return value;
-            }),
-        ),
-      Promise.resolve(obj),
+  static parse(text: string) {
+    return JSON.parse(text, (_, value) =>
+      Serializable.fromJSON(JSON.stringify(value)),
     );
   }
 
