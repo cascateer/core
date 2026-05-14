@@ -30,14 +30,6 @@ export abstract class Serializable<O> {
       const { $ref, value }: SerializerResult<O> = JSON.parse(json),
         [url, pointer] = $ref.split(/#\/?/);
 
-      console.log({
-        url,
-        pointer,
-        path: pointer?.split("/"),
-        name: Serializable.name,
-        got: get(Serializable, pointer?.split("/").slice(1) ?? []),
-      });
-
       if (url === import.meta.url && pointer != null) {
         const path = pointer.split("/");
 
