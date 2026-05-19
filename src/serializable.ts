@@ -29,6 +29,8 @@ export abstract class Serializable<O> {
     const { $ref, value }: SerializerResult<O> = JSON.parse(json),
       [url, path] = $ref.split(/#\/?/);
 
+    console.log("fromJSON", url, this);
+
     if (url != null && path != null) {
       return import(url).then((module) =>
         (
@@ -48,6 +50,8 @@ export abstract class Serializable<O> {
     const id = v4();
 
     this[importMap][id] = ctor;
+
+    console.log("toJSON", import.meta.url, this);
 
     return identity<BrandedSerializer<O>>(() => ({
       value: value.toObject(),
