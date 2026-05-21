@@ -34,10 +34,13 @@ export abstract class Serializable<O> {
     console.warn("fromJSON", url, this);
 
     if (url != null && path != null) {
-      return import(url).then((module) =>
-        (
-          get(module, path.split("/")) as SerializableConstructor<T, O>
-        ).fromObject(value),
+      return import(url).then(
+        (module) => (
+          console.warn("FOOBAR", module, path.split("/")),
+          (
+            get(module, path.split("/")) as SerializableConstructor<T, O>
+          ).fromObject(value)
+        ),
       );
     }
 
