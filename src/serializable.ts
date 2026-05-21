@@ -29,7 +29,7 @@ export abstract class Serializable<O> {
     const { $ref, value }: SerializerResult<O> = JSON.parse(json),
       [url, path] = $ref.split(/#\/?/);
 
-    console.log("fromJSON", url, this);
+    console.warn("fromJSON", url, this);
 
     if (url != null && path != null) {
       return import(url).then((module) =>
