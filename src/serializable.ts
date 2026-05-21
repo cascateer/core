@@ -34,6 +34,7 @@ export abstract class Serializable<O> {
     console.warn("fromJSON", url, this);
 
     if (url != null && path != null) {
+      console.log(Object.entries(import.meta.glob("../*.ts")));
       return import(url).then(
         (module) => (
           console.warn("FOOBAR", module, path.split("/")),
