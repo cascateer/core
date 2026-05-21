@@ -79,7 +79,7 @@ export abstract class Serializable<O> {
       (value, node) =>
         value.then(() =>
           Serializable.fromJSON(JSON.stringify(node.value))
-            .catch(() => node.value)
+            .catch((error) => (console.error(error), node.value))
             .then((value) => {
               if (node.parent != null) {
                 node.parent[node.key] = value;
