@@ -36,7 +36,7 @@ export abstract class Serializable<O> {
     if (url != null && path != null) {
       console.log(
         Object.entries(
-          import.meta.glob("../../node_modules/@cascateer/core/src/*.ts"),
+          import.meta.glob("/node_modules/@cascateer/core/src/*.ts"),
         ),
       );
       return import(url).then(
