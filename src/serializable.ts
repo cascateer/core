@@ -26,6 +26,8 @@ export abstract class Serializable<O> {
   > = {};
 
   static async fromJSON<T, O>(json: string): Promise<T> {
+    console.warn("fromJSON", this);
+
     const { $ref, value }: SerializerResult<O> = JSON.parse(json),
       [url, path] = $ref.split(/#\/?/);
 
