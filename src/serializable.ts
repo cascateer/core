@@ -1,6 +1,7 @@
-import { Dictionary, get } from "lodash";
+import { Dictionary, isString } from "lodash";
 import { Brand, identity } from "ts-brand";
 import { v4 } from "uuid";
+import * as module from ".";
 
 interface SerializerResult<O> {
   value: O;
@@ -30,13 +31,13 @@ export abstract class Serializable<O> {
       const { $ref, value }: SerializerResult<O> = JSON.parse(json),
         [url, pointer] = $ref.split(/#\/?/);
 
-      if (url === import.meta.url && pointer != null) {
-        const path = pointer.split("/");
+      if (url === import.meta.url) {
+        const [a, b, c] = pointer?.split("/") ?? [];
 
-        if (path[0] === Serializable.name) {
-          return (
-            get(Serializable, path.slice(1)) as SerializableConstructor<T, O>
-          ).fromObject(value);
+        if (a === "Serializable" && b === "importMap" && isString(c)) {
+          return (module[a][b][c] as SerializableConstructor<T, O>).fromObject(
+            value,
+          );
         }
       }
     } catch {}
@@ -48,14 +49,14 @@ export abstract class Serializable<O> {
     ctor: SerializableConstructor<T, O>,
     value: Serializable<O>,
   ): BrandedSerializer<O> {
-    const importMap = "importMap" satisfies keyof typeof Serializable;
-    const id = v4();
+    const IMPORT_MAP = "importMap",
+      UUID = v4();
 
-    this[importMap][id] = ctor;
+    this[IMPORT_MAP][UUID] = ctor;
 
     return identity<BrandedSerializer<O>>(() => ({
       value: value.toObject(),
-      $ref: [`${import.meta.url}#`, this.name, importMap, id].join("/"),
+      $ref: [`${import.meta.url}#`, this.name, IMPORT_MAP, UUID].join("/"),
     }));
   }
 
