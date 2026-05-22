@@ -171,15 +171,14 @@ export class StoreProvider<Data> extends ExtendableStoreAdapter<
     >();
     const seedActions: Observable<MulticastAction<Data, "seedAction">> =
       actions.pipe(
-        mergeMap(async (event) =>
+        flatMap((event) =>
           event.type === "seedAction"
             ? {
                 ...event,
-                predicate: constant(await Serializable.parse(event.data.seed)),
+                predicate: constant(Serializable.parse(event.data.seed)),
               }
             : [],
         ),
-        flatMap(identity),
       );
 
     const callbacks = new Map<string, UnaryFunction<unknown, void>>();
@@ -213,7 +212,7 @@ export class StoreProvider<Data> extends ExtendableStoreAdapter<
                     return {
                       ...event,
                       predicate: transform(
-                        await Serializable.parse(event.data.args ?? null),
+                        Serializable.parse(event.data.args ?? null),
                       ),
                       callback: callbacks.get(event.id),
                     };
