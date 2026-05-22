@@ -56,7 +56,7 @@ export abstract class Serializable<O> {
 
     return identity<BrandedSerializer<O>>(() => ({
       value: value.toObject(),
-      $ref: [`${import.meta.url}#`, this.name, IMPORT_MAP, UUID].join("/"),
+      $ref: `${import.meta.url}#${[this.name, IMPORT_MAP, UUID].join("/")}`,
     }));
   }
 
