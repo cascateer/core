@@ -34,6 +34,8 @@ export abstract class Serializable<O> {
       if (url === import.meta.url) {
         const [a, b, c] = pointer?.split("/") ?? [];
 
+        console.log(module, a, b, c);
+
         if (a === "Serializable" && b === "importMap" && isString(c)) {
           return (module[a][b][c] as SerializableConstructor<T, O>).fromObject(
             value,
