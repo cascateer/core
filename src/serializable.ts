@@ -32,19 +32,12 @@ export abstract class Serializable<O> {
         [url, pointer] = $ref.split(/#\/?/);
 
       if (url === import.meta.url) {
-        const [a, b, c] = pointer?.split("/") ?? [];
-
-        if (a != null) {
-          const serializable = get(module, a);
-
-          console.log(serializable, Serializable);
-
-          if (serializable === Serializable && b === "importMap" && c != null) {
-            return (
-              serializable[b][c] as SerializableConstructor<T, O>
-            ).fromObject(value);
-          }
-        }
+        return (
+          get(module, pointer?.split("/") ?? []) as SerializableConstructor<
+            T,
+            O
+          >
+        ).fromObject(value);
       }
     } catch {}
 
