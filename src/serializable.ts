@@ -1,7 +1,6 @@
-import { Dictionary, get } from "lodash";
+import { Dictionary } from "lodash";
 import { Brand, identity } from "ts-brand";
 import { v4 } from "uuid";
-import * as module from ".";
 
 interface SerializerResult<O> {
   value: O;
@@ -31,15 +30,13 @@ export abstract class Serializable<O> {
       const { $ref, value }: SerializerResult<O> = JSON.parse(json),
         [url, pointer] = $ref.split(/#\/?/);
 
-      console.log(module, pointer?.split("/") ?? []);
-
       if (url === import.meta.url) {
-        return (
-          get(module, pointer?.split("/") ?? []) as SerializableConstructor<
-            T,
-            O
-          >
-        ).fromObject(value);
+        const [a, b, c] = pointer?.split("/") ?? [];
+
+        if (a === Serializable.name && b === "importMap" && c != null)
+          return (
+            Serializable[b][c] as SerializableConstructor<T, O>
+          ).fromObject(value);
       }
     } catch {}
 
