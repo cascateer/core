@@ -34,8 +34,6 @@ export abstract class Serializable<O> {
       if (url === import.meta.url) {
         const [a, b, c] = pointer?.split("/") ?? [];
 
-        console.log(module, a, b, c);
-
         if (a != null) {
           const serializable = get(module, a);
 
