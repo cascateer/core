@@ -20,17 +20,15 @@ class SignalEnumerator<T> {
   enumerate = (value: T) => asEnumerable(value).map(this.predicate);
 }
 
-class SignalReflector<T> {
+class SignalAdapter<T> {
   constructor(
-    public predicate: (
-      transform: Transform<T>,
-    ) => Transform<unknown> = identity,
+    public lift: (transform: Transform<T>) => Transform<unknown> = identity,
   ) {}
 
-  reflect = <U>(
-    lift: UnaryFunction<Transform<U>, Transform<T>>,
-  ): SignalReflector<U> =>
-    new SignalReflector((transform) => this.predicate(lift(transform)));
+  connect = <U>(
+    connector: UnaryFunction<Transform<U>, Transform<T>>,
+  ): SignalAdapter<U> =>
+    new SignalAdapter((transform) => this.lift(connector(transform)));
 }
 
 export class Signal<T> extends ProxyObservable<T> {
@@ -43,32 +41,32 @@ export class Signal<T> extends ProxyObservable<T> {
   }
 
   enumerator: SignalEnumerator<T>;
-  reflector: SignalReflector<T>;
+  adapter: SignalAdapter<T>;
 
   constructor({
     value,
     enumerator = new SignalEnumerator(),
-    reflector = new SignalReflector(),
+    adapter = new SignalAdapter(),
   }: {
     value: Observable<T>;
     enumerator?: SignalEnumerator<T>;
-    reflector?: SignalReflector<T>;
+    adapter?: SignalAdapter<T>;
   }) {
     super(value);
 
     this.enumerator = enumerator;
-    this.reflector = reflector;
+    this.adapter = adapter;
   }
 
   private project<U>(
-    project: UnaryFunction<T, U>,
-    lift: UnaryFunction<Transform<U>, Transform<T>>,
+    projector: UnaryFunction<T, U>,
+    connector: UnaryFunction<Transform<U>, Transform<T>>,
     enumerate?: Enumerator<U>,
   ): Signal<U> {
     return new Signal({
-      value: this.pipe(map(project), distinctUntilChanged()),
+      value: this.pipe(map(projector), distinctUntilChanged()),
       enumerator: new SignalEnumerator(enumerate),
-      reflector: this.reflector.reflect(lift),
+      adapter: this.adapter.connect(connector),
     });
   }
 

@@ -30,8 +30,8 @@ test("transformation", () => {
     ),
   }).property("number");
 
-  transforms.next(signal.reflector.predicate((number) => number + 1));
-  transforms.next(signal.reflector.predicate((number) => number + 2));
+  transforms.next(signal.adapter.lift((number) => number + 1));
+  transforms.next(signal.adapter.lift((number) => number + 2));
   transforms.complete();
 
   return lastValueFrom(signal.pipe(toArray())).then((numbers) =>

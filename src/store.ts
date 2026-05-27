@@ -143,7 +143,7 @@ export class ExtendableStoreAdapter<
                         update: (predicate, config = {}) =>
                           thru(this.context.transform(key), (transform) => {
                             transform.register((args) =>
-                              signal.reflector.predicate(predicate(args)),
+                              signal.adapter.lift(predicate(args)),
                             );
 
                             return (args) =>
