@@ -34,10 +34,10 @@ export abstract class Serializable<O> {
       if (url === import.meta.url) {
         const [a, b, c] = pointer?.split("/") ?? [];
 
-        import(url).then(console.log);
-
         if (a != null) {
           const serializable = get(module, a);
+
+          console.log(serializable, Serializable);
 
           if (serializable === Serializable && b === "importMap" && c != null) {
             return (
