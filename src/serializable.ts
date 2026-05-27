@@ -1,4 +1,4 @@
-import { Dictionary, isString } from "lodash";
+import { Dictionary, get } from "lodash";
 import { Brand, identity } from "ts-brand";
 import { v4 } from "uuid";
 import * as module from ".";
@@ -36,10 +36,14 @@ export abstract class Serializable<O> {
 
         console.log(module, a, b, c);
 
-        if (a === "Serializable" && b === "importMap" && isString(c)) {
-          return (module[a][b][c] as SerializableConstructor<T, O>).fromObject(
-            value,
-          );
+        if (a != null) {
+          const serializable = get(module, a);
+
+          if (serializable === Serializable && b === "importMap" && c != null) {
+            return (
+              serializable[b][c] as SerializableConstructor<T, O>
+            ).fromObject(value);
+          }
         }
       }
     } catch {}
