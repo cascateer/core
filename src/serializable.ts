@@ -31,6 +31,8 @@ export abstract class Serializable<O> {
       const { $ref, value }: SerializerResult<O> = JSON.parse(json),
         [url, pointer] = $ref.split(/#\/?/);
 
+      console.log(module, pointer?.split("/") ?? []);
+
       if (url === import.meta.url) {
         return (
           get(module, pointer?.split("/") ?? []) as SerializableConstructor<
