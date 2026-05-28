@@ -1,6 +1,5 @@
 import { clone, identity, isEqual, memoize } from "lodash";
 import { distinctUntilChanged, map, Observable, UnaryFunction } from "rxjs";
-import { ProxyObservable } from ".";
 import {
   asEnumerable,
   EnumerableItem,
@@ -9,6 +8,7 @@ import {
   nthArg,
   property,
 } from "../lib";
+import { ProxyObservable } from "../observable";
 import { Transform } from "../types";
 
 class SignalEnumerator<T> {

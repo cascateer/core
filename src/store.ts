@@ -9,7 +9,6 @@ import {
   UnaryFunction,
 } from "rxjs";
 import { ExtendableDictionary } from "./lib";
-import { ComputedSignal, Signal } from "./observable";
 import {
   flatMap,
   MulticastAction,
@@ -17,6 +16,7 @@ import {
   sequence,
 } from "./operators";
 import { Serializable } from "./serializable";
+import { ComputedSignal, Signal } from "./signal";
 import { Action, Transform } from "./types";
 
 export type StoreEffect<Result> = () => Signal<Result>;

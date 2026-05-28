@@ -8,8 +8,8 @@ import {
   toArray,
 } from "rxjs";
 import { expect, test } from "vitest";
+import { ComputedSignal } from ".";
 import { Transform } from "../types";
-import { ComputedSignal } from "./Signal";
 
 test("projection", () => {
   const signal = new ComputedSignal({

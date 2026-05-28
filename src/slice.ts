@@ -9,8 +9,8 @@ import {
 } from "./component";
 import { defineCustomElement } from "./dom";
 import { ExtendableDictionary } from "./lib";
-import { ComputedSignal } from "./observable";
 import { multicast, MulticastSubject } from "./operators";
+import { ComputedSignal } from "./signal";
 import { StoreAdapter, StoreProvider } from "./store";
 import { TerminalAdapter, TerminalEffect, TerminalProvider } from "./terminal";
 import { Action } from "./types";
