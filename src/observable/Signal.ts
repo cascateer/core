@@ -20,15 +20,15 @@ class SignalEnumerator<T> {
   enumerate = (value: T) => asEnumerable(value).map(this.enumerator);
 }
 
-class SignalAdapter<T> {
+class SignalChain<T> {
   constructor(
-    public lift: (transform: Transform<T>) => Transform<unknown> = identity,
+    public pull: (transform: Transform<T>) => Transform<unknown> = identity,
   ) {}
 
-  connect<U>(
+  push<U>(
     connector: UnaryFunction<Transform<U>, Transform<T>>,
-  ): SignalAdapter<U> {
-    return new SignalAdapter((transform) => this.lift(connector(transform)));
+  ): SignalChain<U> {
+    return new SignalChain((transform) => this.pull(connector(transform)));
   }
 }
 
@@ -42,21 +42,21 @@ export class Signal<T> extends ProxyObservable<T> {
   }
 
   enumerator: SignalEnumerator<T>;
-  adapter: SignalAdapter<T>;
+  chain: SignalChain<T>;
 
   constructor({
     value,
     enumerator = new SignalEnumerator(),
-    adapter = new SignalAdapter(),
+    chain = new SignalChain(),
   }: {
     value: Observable<T>;
     enumerator?: SignalEnumerator<T>;
-    adapter?: SignalAdapter<T>;
+    chain?: SignalChain<T>;
   }) {
     super(value);
 
     this.enumerator = enumerator;
-    this.adapter = adapter;
+    this.chain = chain;
   }
 
   private project<U>(
@@ -67,7 +67,7 @@ export class Signal<T> extends ProxyObservable<T> {
     return new Signal({
       value: this.pipe(map(projector), distinctUntilChanged()),
       enumerator: new SignalEnumerator(enumerator),
-      adapter: this.adapter.connect(connector),
+      chain: this.chain.push(connector),
     });
   }
 
