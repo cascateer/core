@@ -18,23 +18,23 @@ export function createComponent(customElement?: string) {
   const withTemplate =
     <Styles extends Promise<unknown>[]>(...styles: Styles) =>
     <
-      Model extends Dictionary<Effect<any, any> | Action<any, any>>,
+      Context extends Dictionary<Effect<any, any> | Action<any, any>>,
       Props extends JSX.Props,
     >(
       constructor: (
-        model: Model,
+        ctx: Context,
         ...classNamesList: { -readonly [K in keyof Styles]: Awaited<Styles[K]> }
       ) => JSX.Component<Props>,
     ) =>
       class extends ComponentConstructor<Props> {
-        constructor(model: Model) {
+        constructor(ctx: Context) {
           super(
             (key) => (props) =>
               createFragment({
                 children: defer(() =>
                   Promise.all(styles).then((cssModules) =>
                     cssStyleSheets(cssModules).then(async (cssStyleSheets) => {
-                      const element = constructor(model, ...cssModules)(props);
+                      const element = constructor(ctx, ...cssModules)(props);
 
                       return customElement != null
                         ? new (defineCustomElement(
