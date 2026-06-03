@@ -1,4 +1,11 @@
 import {
+  asObservable,
+  ExtendableDictionary,
+  MaybeArray,
+  MaybeObservable,
+  property,
+} from "@cascateer/lib";
+import {
   constant,
   Dictionary,
   intersectionWith,
@@ -19,10 +26,9 @@ import {
   tap,
   UnaryFunction,
 } from "rxjs";
-import { asObservable, ExtendableDictionary, property } from "./lib";
-import { memoizeHashed } from "./lib/memoizeHashed";
+import { memoize } from "./lib/memoize";
 import { ProxyObservable } from "./observable";
-import { Action, MaybeArray, MaybeObservable, ProxyEffect } from "./types";
+import { Action, ProxyEffect } from "./types";
 
 interface TagsConstructor<Args, Result> {
   (args: Args, result: Result): string[];
@@ -47,7 +53,7 @@ class Memoizable<Args, Result> {
     this.tags = isFunction(tags) ? tags : constant([tags ?? []].flat());
 
     this.subscribe = (invalidatedTags) => {
-      const memoizedEffect: ProxyEffect<Args, Result> = memoizeHashed(
+      const memoizedEffect: ProxyEffect<Args, Result> = memoize(
         (args) =>
           new ProxyObservable((pending) =>
             this.predicate(args).pipe(

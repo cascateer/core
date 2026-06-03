@@ -1,5 +1,5 @@
+import { nonNullable } from "@cascateer/lib";
 import { isObject, isString, once, tap } from "lodash";
-import { nonNullable } from "./lib";
 
 const cssImports = once(() =>
   Promise.all(

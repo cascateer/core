@@ -1,15 +1,15 @@
-import { clone, identity, isEqual, memoize } from "lodash";
-import { distinctUntilChanged, map, Observable, UnaryFunction } from "rxjs";
 import {
   asEnumerable,
+  EndoFunctionOperator,
   EnumerableItem,
   Enumerator,
   nonNullable,
   nthArg,
   property,
-} from "../lib";
+} from "@cascateer/lib";
+import { clone, identity, isEqual, memoize } from "lodash";
+import { distinctUntilChanged, map, Observable, UnaryFunction } from "rxjs";
 import { ProxyObservable } from "../observable";
-import { TransformOperator } from "../signal";
 
 class SignalEnumerator<T> {
   constructor(private predicate: Enumerator<T> = nthArg(1)) {}
@@ -30,7 +30,7 @@ export class Signal<T> extends ProxyObservable<T> {
   }
 
   enumerator: SignalEnumerator<T>;
-  pull: TransformOperator<T, unknown>;
+  pull: EndoFunctionOperator<T, unknown>;
 
   constructor({
     value,
@@ -39,7 +39,7 @@ export class Signal<T> extends ProxyObservable<T> {
   }: {
     value: Observable<T>;
     enumerator?: SignalEnumerator<T>;
-    pull?: TransformOperator<T, unknown>;
+    pull?: EndoFunctionOperator<T, unknown>;
   }) {
     super(value);
 
@@ -49,7 +49,7 @@ export class Signal<T> extends ProxyObservable<T> {
 
   private map<U>(
     project: UnaryFunction<T, U>,
-    lift: TransformOperator<U, T>,
+    lift: EndoFunctionOperator<U, T>,
     enumerate?: Enumerator<U>,
   ): Signal<U> {
     return new Signal({

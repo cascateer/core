@@ -1,8 +1,7 @@
 import { Dictionary, mapValues, tap } from "lodash";
 import { combineLatest, ReplaySubject, switchMap, UnaryFunction } from "rxjs";
 import { Observable } from "rxjs/internal/Observable";
-import { ObservableInput } from "rxjs/internal/types";
-import { memoizeHashed } from "./lib/memoizeHashed";
+import { memoize } from "./lib/memoize";
 import { ProxyObservable } from "./observable";
 import { accumulate, every, some } from "./operators";
 
@@ -36,7 +35,7 @@ export class ProxyEffectInterceptor extends ReplaySubject<
     effects: Effects,
   ): ProxyEffects<Effects> {
     return mapValues(effects, (effect) =>
-      memoizeHashed((args) =>
+      memoize((args) =>
         tap(
           new ProxyObservable(effect(args), (target, receiver) =>
             combineLatest([target.pending, receiver.refCount]).pipe(every()),
@@ -65,13 +64,3 @@ export interface Action<Args, Result> extends UnaryFunction<
   Args,
   Promise<Result>
 > {}
-
-export type MaybeArray<T> = T | T[];
-
-export type MaybeObservable<T> = T | Observable<T>;
-
-export type MaybeObservableInput<T> = T | ObservableInput<T>;
-
-export type MaybeObservableInputTuple<T> = {
-  [K in keyof T]: MaybeObservableInput<T[K]>;
-};

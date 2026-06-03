@@ -1,7 +1,8 @@
+import { EndoFunction } from "@cascateer/lib";
 import { concatMap, shareReplay, startWith, UnaryFunction } from "rxjs";
 import { v4 } from "uuid";
 import { ProxySubject } from "../observable";
-import { ComputedSignal, Transform } from "../signal";
+import { ComputedSignal } from "../signal";
 import { exchangeWith } from "./exchangeWith";
 import { proxyReplaySubject } from "./proxyReplaySubject";
 
@@ -22,7 +23,7 @@ interface MulticastActions<Data> {
     };
   };
   transformAction: {
-    predicate: Transform<Data>;
+    predicate: EndoFunction<Data>;
     data: {
       key: string;
       args: string;

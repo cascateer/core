@@ -1,5 +1,5 @@
+import { property } from "@cascateer/lib";
 import { fromEvent, map, Observable, OperatorFunction } from "rxjs";
-import { property } from "../lib";
 
 export const exchangeWith =
   <InMessage, OutMessage>(

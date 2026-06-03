@@ -1,10 +1,10 @@
+import { ExtendableDictionary } from "@cascateer/lib";
 import { Dictionary, kebabCase } from "lodash";
 import { defer, share, UnaryFunction } from "rxjs";
 import { createFragment } from ".";
 import { ApiAdapter, ApiEffect } from "./api";
 import { cssStyleSheets } from "./css";
 import { defineCustomElement } from "./dom";
-import { ExtendableDictionary } from "./lib";
 import { ComputedSignal } from "./signal";
 import { asStoreEffects, StoreAdapter, StoreEffects } from "./store";
 import { TerminalAdapter, TerminalEffect } from "./terminal";
