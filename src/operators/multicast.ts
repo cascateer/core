@@ -1,8 +1,7 @@
 import { concatMap, shareReplay, startWith, UnaryFunction } from "rxjs";
 import { v4 } from "uuid";
 import { ProxySubject } from "../observable";
-import { ComputedSignal } from "../signal";
-import { Transform } from "../types";
+import { ComputedSignal, Transform } from "../signal";
 import { exchangeWith } from "./exchangeWith";
 import { proxyReplaySubject } from "./proxyReplaySubject";
 

@@ -8,8 +8,7 @@ import {
   toArray,
 } from "rxjs";
 import { expect, test } from "vitest";
-import { ComputedSignal } from ".";
-import { Transform } from "../types";
+import { ComputedSignal, Transform } from ".";
 
 test("projection", () => {
   const signal = new ComputedSignal({
@@ -30,8 +29,8 @@ test("transformation", () => {
     ),
   }).property("number");
 
-  transforms.next(signal.chain.pull((number) => number + 1));
-  transforms.next(signal.chain.pull((number) => number + 2));
+  transforms.next(signal.pull((number) => number + 1));
+  transforms.next(signal.pull((number) => number + 2));
   transforms.complete();
 
   return lastValueFrom(signal.pipe(toArray())).then((numbers) =>

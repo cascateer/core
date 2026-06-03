@@ -75,5 +75,3 @@ export type MaybeObservableInput<T> = T | ObservableInput<T>;
 export type MaybeObservableInputTuple<T> = {
   [K in keyof T]: MaybeObservableInput<T[K]>;
 };
-
-export type Transform<T> = UnaryFunction<T, T>;

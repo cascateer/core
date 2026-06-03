@@ -16,8 +16,8 @@ import {
   sequence,
 } from "./operators";
 import { Serializable } from "./serializable";
-import { ComputedSignal, Signal } from "./signal";
-import { Action, Transform } from "./types";
+import { ComputedSignal, Signal, Transform } from "./signal";
+import { Action } from "./types";
 
 export type StoreEffect<Result> = () => Signal<Result>;
 
@@ -143,7 +143,7 @@ export class ExtendableStoreAdapter<
                         update: (predicate, config = {}) =>
                           thru(this.context.transform(key), (transform) => {
                             transform.register((args) =>
-                              signal.chain.pull(predicate(args)),
+                              signal.pull(predicate(args)),
                             );
 
                             return (args) =>
