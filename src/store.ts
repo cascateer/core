@@ -1,3 +1,4 @@
+import { EndoFunction, ExtendableDictionary } from "@cascateer/lib";
 import { constant, Dictionary, mapValues, tap, thru } from "lodash";
 import {
   identity,
@@ -8,7 +9,6 @@ import {
   shareReplay,
   UnaryFunction,
 } from "rxjs";
-import { ExtendableDictionary } from "./lib";
 import {
   flatMap,
   MulticastAction,
@@ -17,7 +17,7 @@ import {
 } from "./operators";
 import { Serializable } from "./serializable";
 import { ComputedSignal, Signal } from "./signal";
-import { Action, Transform } from "./types";
+import { Action } from "./types";
 
 export type StoreEffect<Result> = () => Signal<Result>;
 
@@ -70,7 +70,7 @@ export class ExtendableStoreAdapter<
             },
             void
           >;
-          register: UnaryFunction<(args: any) => Transform<any>, void>;
+          register: UnaryFunction<(args: any) => EndoFunction<any>, void>;
         }
       >;
     },
@@ -115,7 +115,7 @@ export class ExtendableStoreAdapter<
                     ? T
                     : never,
                 >(
-                  predicate: UnaryFunction<Args, Transform<T>>,
+                  predicate: UnaryFunction<Args, EndoFunction<T>>,
                   config?: { sameOrigin?: boolean },
                 ) => Action<Args, any>;
               };
@@ -143,7 +143,7 @@ export class ExtendableStoreAdapter<
                         update: (predicate, config = {}) =>
                           thru(this.context.transform(key), (transform) => {
                             transform.register((args) =>
-                              signal.chain.pull(predicate(args)),
+                              signal.pull(predicate(args)),
                             );
 
                             return (args) =>

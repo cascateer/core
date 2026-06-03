@@ -1,3 +1,11 @@
+import {
+  asArray,
+  asObservable,
+  keys,
+  MaybeArray,
+  MaybeObservable,
+  MaybeObservableInputTuple,
+} from "@cascateer/lib";
 import { bind, camelCase, isFunction, isObject } from "lodash";
 import React, { CSSProperties } from "react";
 import {
@@ -9,13 +17,7 @@ import {
   UnaryFunction,
 } from "rxjs";
 import { Leaf, ObservableFragment } from "./fragment";
-import { asArray, asObservable, keys } from "./lib";
 import { sequence } from "./operators";
-import {
-  MaybeArray,
-  MaybeObservable,
-  MaybeObservableInputTuple,
-} from "./types";
 
 type DocumentEventListener<EventName extends keyof DocumentEventMap> =
   | Partial<Observer<DocumentEventMap[EventName]>>

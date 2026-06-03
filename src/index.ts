@@ -7,4 +7,4 @@ export { Serializable, type BrandedSerializer } from "./serializable";
 export { createSlice } from "./slice";
 export { type StoreEffect } from "./store";
 export { type TerminalEffect } from "./terminal";
-export { type Action, type MaybeObservable } from "./types";
+export { type Action } from "./types";

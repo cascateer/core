@@ -1,7 +1,7 @@
+import { ExtendableDictionary } from "@cascateer/lib";
 import { Dictionary } from "lodash";
 import { UnaryFunction } from "rxjs";
 import { ApiAdapter, ApiEffect } from "./api";
-import { ExtendableDictionary } from "./lib";
 import { ComputedSignal } from "./signal";
 import { asStoreEffects, StoreAdapter, StoreEffects } from "./store";
 import {

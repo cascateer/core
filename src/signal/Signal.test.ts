@@ -1,3 +1,4 @@
+import { EndoFunction } from "@cascateer/lib";
 import { identity } from "lodash";
 import {
   lastValueFrom,
@@ -9,7 +10,6 @@ import {
 } from "rxjs";
 import { expect, test } from "vitest";
 import { ComputedSignal } from ".";
-import { Transform } from "../types";
 
 test("projection", () => {
   const signal = new ComputedSignal({
@@ -22,7 +22,7 @@ test("projection", () => {
 });
 
 test("transformation", () => {
-  const transforms = new ReplaySubject<Transform<any>>();
+  const transforms = new ReplaySubject<EndoFunction<any>>();
   const signal = new ComputedSignal({
     value: transforms.pipe(
       startWith(identity),
@@ -30,8 +30,8 @@ test("transformation", () => {
     ),
   }).property("number");
 
-  transforms.next(signal.chain.pull((number) => number + 1));
-  transforms.next(signal.chain.pull((number) => number + 2));
+  transforms.next(signal.pull((number) => number + 1));
+  transforms.next(signal.pull((number) => number + 2));
   transforms.complete();
 
   return lastValueFrom(signal.pipe(toArray())).then((numbers) =>

@@ -1,3 +1,4 @@
+import { property } from "@cascateer/lib";
 import { partition, thru, uniq, uniqBy } from "lodash";
 import {
   distinct,
@@ -11,7 +12,6 @@ import {
   share,
 } from "rxjs";
 import { v4 } from "uuid";
-import { property } from "./lib";
 import {
   accumulate,
   exchangeWith,

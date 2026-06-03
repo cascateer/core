@@ -1,3 +1,4 @@
+import { ExtendableDictionary } from "@cascateer/lib";
 import { Dictionary, mapValues } from "lodash";
 import { defer, map, share, UnaryFunction } from "rxjs";
 import { createFragment } from ".";
@@ -8,7 +9,6 @@ import {
   ComponentsProvider,
 } from "./component";
 import { defineCustomElement } from "./dom";
-import { ExtendableDictionary } from "./lib";
 import { multicast, MulticastSubject } from "./operators";
 import { ComputedSignal } from "./signal";
 import { StoreAdapter, StoreProvider } from "./store";

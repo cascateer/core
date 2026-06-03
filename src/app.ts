@@ -1,7 +1,7 @@
+import { property } from "@cascateer/lib";
 import { Dictionary, mapValues } from "lodash";
 import { UnaryFunction } from "rxjs";
 import { createFragment } from ".";
-import { property } from "./lib";
 import { Slice, SliceAdapter, SliceProvider } from "./slice";
 
 export class App<
