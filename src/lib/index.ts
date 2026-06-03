@@ -22,7 +22,7 @@ export const asObservable = <T>(value: MaybeObservable<T>): Observable<T> =>
 
 export const nonNullable = <T>(value: T): NonNullable<T> => {
   if (value == null) {
-    throw new Error(`${value} is nil`);
+    throw null;
   }
 
   return value;
