@@ -1,6 +1,6 @@
 export { ApiProvider, type ApiEffect } from "./api";
 export { App } from "./app";
-export { createComponent } from "./component";
+export { ComponentConstructor, createComponent } from "./component";
 export { defineCustomProperties } from "./dom";
 export { createElement, createFragment } from "./jsx-runtime";
 export { Serializable, type BrandedSerializer } from "./serializable";
