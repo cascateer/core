@@ -1,4 +1,5 @@
 import { property } from "@cascateer/lib";
+import { flatMap } from "@cascateer/lib/operators";
 import { partition, thru, uniq, uniqBy } from "lodash";
 import {
   distinct,
@@ -15,7 +16,6 @@ import { v4 } from "uuid";
 import {
   accumulate,
   exchangeWith,
-  flatMap,
   MulticastActionMessage,
   MulticastClientMessage,
   proxyReplaySubject,

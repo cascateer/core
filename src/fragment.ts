@@ -1,4 +1,5 @@
 import { asArray, asObservable } from "@cascateer/lib";
+import { flatMap } from "@cascateer/lib/operators";
 import { tap } from "lodash";
 import {
   combineLatest,
@@ -13,7 +14,6 @@ import {
   Subscription,
   switchMap,
 } from "rxjs";
-import { flatMap } from "./operators";
 
 export type Leaf =
   | string

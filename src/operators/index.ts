@@ -1,7 +1,6 @@
 export { accumulate } from "./accumulate";
 export { every } from "./every";
 export { exchangeWith } from "./exchangeWith";
-export { flatMap } from "./flatMap";
 export {
   multicast,
   type MulticastAction,
