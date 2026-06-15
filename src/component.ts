@@ -33,7 +33,7 @@ export function createComponent(customElement?: string) {
               createFragment({
                 children: defer(() =>
                   Promise.all(styles).then((cssModules) =>
-                    cssStyleSheets(cssModules).then(async (cssStyleSheets) => {
+                    cssStyleSheets(cssModules).then((cssStyleSheets) => {
                       const element = constructor(ctx, ...cssModules)(props);
 
                       return customElement != null
