@@ -31,10 +31,10 @@ test("transformation", () => {
   }).property("number");
 
   transforms.next(signal.pull((number) => number + 1));
-  transforms.next(signal.pull((number) => number + 3));
+  transforms.next(signal.pull((number) => number + 2));
   transforms.complete();
 
   return lastValueFrom(signal.pipe(toArray())).then((numbers) =>
-    expect(numbers).toEqual([1, 2, 5]),
+    expect(numbers).toEqual([1, 2, 4]),
   );
 });
