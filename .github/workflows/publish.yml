@@ -8,3 +8,4 @@ on:
 jobs:
   call-workflow:
     uses: cascateer/lib/.github/workflows/publish.yml@main
+    secrets: inherit
