@@ -15,6 +15,84 @@ import { StoreAdapter, StoreProvider } from "./store";
 import { TerminalAdapter, TerminalEffect, TerminalProvider } from "./terminal";
 import { Action } from "./types";
 
+interface SliceConfigStore<
+  Data,
+  StoreSignals extends Dictionary<ComputedSignal<any>>,
+  StoreActions extends Dictionary<Action<any, any>>,
+> extends UnaryFunction<
+  {
+    StoreProvider: {
+      new (): StoreProvider<Data>;
+    };
+  },
+  StoreAdapter<StoreSignals, StoreActions>
+> {}
+
+interface SliceConfigApi<
+  ApiEffects extends Dictionary<ApiEffect<any, any>>,
+  ApiActions extends Dictionary<Action<any, any>>,
+> extends ApiAdapter<ApiEffects, ApiActions> {}
+
+interface SliceConfigTerminal<
+  StoreSignals extends Dictionary<ComputedSignal<any>>,
+  StoreActions extends Dictionary<Action<any, any>>,
+  ApiEffects extends Dictionary<ApiEffect<any, any>>,
+  ApiActions extends Dictionary<Action<any, any>>,
+  TerminalEffects extends Dictionary<TerminalEffect<any, any>>,
+  TerminalActions extends Dictionary<Action<any, any>>,
+> extends UnaryFunction<
+  {
+    TerminalProvider: {
+      new (): TerminalProvider<
+        StoreSignals,
+        StoreActions,
+        ApiEffects,
+        ApiActions
+      >;
+    };
+  },
+  TerminalAdapter<TerminalEffects, TerminalActions>
+> {}
+
+interface SliceConfigComponents<
+  StoreSignals extends Dictionary<ComputedSignal<any>>,
+  StoreActions extends Dictionary<Action<any, any>>,
+  ApiEffects extends Dictionary<ApiEffect<any, any>>,
+  ApiActions extends Dictionary<Action<any, any>>,
+  TerminalEffects extends Dictionary<TerminalEffect<any, any>>,
+  TerminalActions extends Dictionary<Action<any, any>>,
+  Components extends Dictionary<ComponentConstructor<any>>,
+> extends UnaryFunction<
+  {
+    ComponentsProvider: {
+      new (): ComponentsProvider<
+        StoreSignals,
+        StoreActions,
+        ApiEffects,
+        ApiActions,
+        TerminalEffects,
+        TerminalActions
+      >;
+    };
+  },
+  ComponentsAdapter<Components>
+> {}
+
+interface SliceConfigTemplate<
+  Components extends Dictionary<ComponentConstructor<any>>,
+> extends UnaryFunction<
+  {
+    [K in keyof Components]: ReturnType<
+      <
+        Props extends Components[K] extends ComponentConstructor<infer Props>
+          ? Props
+          : never,
+      >() => JSX.Component<Props>
+    >;
+  },
+  JSX.Element
+> {}
+
 interface SliceConfig<
   Data,
   StoreSignals extends Dictionary<ComputedSignal<any>>,
@@ -26,83 +104,17 @@ interface SliceConfig<
   Components extends Dictionary<ComponentConstructor<any>>,
 > {
   data: Data;
-  store: UnaryFunction<
-    {
-      StoreProvider: {
-        new (): StoreProvider<Data>;
-      };
-    },
-    StoreAdapter<StoreSignals, StoreActions>
+  store: SliceConfigStore<Data, StoreSignals, StoreActions>;
+  api: SliceConfigApi<ApiEffects, ApiActions>;
+  terminal: SliceConfigTerminal<
+    StoreSignals,
+    StoreActions,
+    ApiEffects,
+    ApiActions,
+    TerminalEffects,
+    TerminalActions
   >;
-  api: ApiAdapter<ApiEffects, ApiActions>;
-  terminal: UnaryFunction<
-    {
-      TerminalProvider: {
-        new (): TerminalProvider<
-          StoreSignals,
-          StoreActions,
-          ApiEffects,
-          ApiActions
-        >;
-      };
-    },
-    TerminalAdapter<TerminalEffects, TerminalActions>
-  >;
-  components: UnaryFunction<
-    {
-      ComponentsProvider: {
-        new (): ComponentsProvider<
-          StoreSignals,
-          StoreActions,
-          ApiEffects,
-          ApiActions,
-          TerminalEffects,
-          TerminalActions
-        >;
-      };
-    },
-    ComponentsAdapter<Components>
-  >;
-  render: UnaryFunction<
-    {
-      [K in keyof Components]: ReturnType<
-        <
-          Props extends Components[K] extends ComponentConstructor<infer Props>
-            ? Props
-            : never,
-        >() => JSX.Component<Props>
-      >;
-    },
-    JSX.Element
-  >;
-}
-
-export const createSlice =
-  <Data>(data: Data) =>
-  <
-    StoreSignals extends Dictionary<ComputedSignal<any>>,
-    StoreActions extends Dictionary<Action<any, any>>,
-    ApiEffects extends Dictionary<ApiEffect<any, any>>,
-    ApiActions extends Dictionary<Action<any, any>>,
-    TerminalEffects extends Dictionary<TerminalEffect<any, any>>,
-    TerminalActions extends Dictionary<Action<any, any>>,
-    Components extends Dictionary<ComponentConstructor<any>>,
-  >(
-    config: Omit<
-      SliceConfig<
-        Data,
-        StoreSignals,
-        StoreActions,
-        ApiEffects,
-        ApiActions,
-        TerminalEffects,
-        TerminalActions,
-        Components
-      >,
-      "data"
-    >,
-  ): SliceConfig<
-    Data,
+  components: SliceConfigComponents<
     StoreSignals,
     StoreActions,
     ApiEffects,
@@ -110,7 +122,68 @@ export const createSlice =
     TerminalEffects,
     TerminalActions,
     Components
-  > => ({ data, ...config });
+  >;
+  template: SliceConfigTemplate<Components>;
+}
+
+export const createSlice = () => ({
+  withData: <Data>(data: Data) => ({
+    withStore: <
+      StoreSignals extends Dictionary<ComputedSignal<any>>,
+      StoreActions extends Dictionary<Action<any, any>>,
+    >(
+      store: SliceConfigStore<Data, StoreSignals, StoreActions>,
+    ) => ({
+      withApi: <
+        ApiEffects extends Dictionary<ApiEffect<any, any>>,
+        ApiActions extends Dictionary<Action<any, any>>,
+      >(
+        api: SliceConfigApi<ApiEffects, ApiActions>,
+      ) => ({
+        withTerminal: <
+          TerminalEffects extends Dictionary<TerminalEffect<any, any>>,
+          TerminalActions extends Dictionary<Action<any, any>>,
+        >(
+          terminal: SliceConfigTerminal<
+            StoreSignals,
+            StoreActions,
+            ApiEffects,
+            ApiActions,
+            TerminalEffects,
+            TerminalActions
+          >,
+        ) => ({
+          withComponents: <
+            Components extends Dictionary<ComponentConstructor<any>>,
+          >(
+            components: SliceConfigComponents<
+              StoreSignals,
+              StoreActions,
+              ApiEffects,
+              ApiActions,
+              TerminalEffects,
+              TerminalActions,
+              Components
+            >,
+          ) => ({
+            withTemplate: (
+              template: SliceConfigTemplate<Components>,
+            ): SliceConfig<
+              Data,
+              StoreSignals,
+              StoreActions,
+              ApiEffects,
+              ApiActions,
+              TerminalEffects,
+              TerminalActions,
+              Components
+            > => ({ data, store, api, terminal, components, template }),
+          }),
+        }),
+      }),
+    }),
+  }),
+});
 
 export class Slice<
   Data,
@@ -136,7 +209,7 @@ export class Slice<
       api,
       terminal,
       components,
-      render,
+      template,
     }: SliceConfig<
       Data,
       StoreSignals,
@@ -179,7 +252,7 @@ export class Slice<
           map(
             (key) =>
               new (defineCustomElement(`${key}-slice`))(
-                render(
+                template(
                   mapValues(
                     components({
                       ComponentsProvider: ((context) =>
