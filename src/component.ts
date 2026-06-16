@@ -23,7 +23,7 @@ export function createComponent(customElement?: string) {
     >(
       constructor: (
         ctx: Context,
-        ...cnList: { -readonly [K in keyof Styles]: Awaited<Styles[K]> }
+        ...cn: { -readonly [K in keyof Styles]: Awaited<Styles[K]> }
       ) => JSX.Component<Props>,
     ) =>
     (ctx: Context): ComponentConstructor<Props> =>
@@ -46,6 +46,26 @@ export function createComponent(customElement?: string) {
           ),
         ).pipe(share()),
       });
+
+  return {
+    withStyles: <Styles extends Promise<unknown>[]>(...styles: Styles) => ({
+      withTemplate: withTemplate(...styles),
+    }),
+    withTemplate: withTemplate(),
+  };
+}
+
+export function createStandaloneComponent(customElement?: string) {
+  const withTemplate =
+    <Styles extends Promise<unknown>[]>(...styles: Styles) =>
+    <Props extends JSX.Props>(
+      constructor: (
+        ...cn: { -readonly [K in keyof Styles]: Awaited<Styles[K]> }
+      ) => JSX.Component<Props>,
+    ): ComponentConstructor<Props> =>
+      createComponent(customElement)
+        .withStyles(...styles)
+        .withTemplate<{}, Props>((_, ...cn) => constructor(...cn))({});
 
   return {
     withStyles: <Styles extends Promise<unknown>[]>(...styles: Styles) => ({
