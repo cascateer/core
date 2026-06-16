@@ -23,7 +23,7 @@ export function createComponent(customElement?: string) {
     >(
       constructor: (
         ctx: Context,
-        ...cn: { -readonly [K in keyof Styles]: Awaited<Styles[K]> }
+        ...classNames: { -readonly [K in keyof Styles]: Awaited<Styles[K]> }
       ) => JSX.Component<Props>,
     ) =>
       class extends ComponentConstructor<Props> {
@@ -64,14 +64,14 @@ export function createStandaloneComponent(customElement?: string) {
     <Styles extends Promise<unknown>[]>(...styles: Styles) =>
     <Props extends JSX.Props>(
       constructor: (
-        ...cn: { -readonly [K in keyof Styles]: Awaited<Styles[K]> }
+        ...classNames: { -readonly [K in keyof Styles]: Awaited<Styles[K]> }
       ) => JSX.Component<Props>,
     ): JSX.Component<Props> =>
       new (createComponent(customElement)
         .withStyles(...styles)
-        .withTemplate<{}, Props>((_, ...cn) => constructor(...cn)))(
-        {},
-      ).predicate("cct");
+        .withTemplate<{}, Props>((_, ...classNames) =>
+          constructor(...classNames),
+        ))({}).predicate("cct");
 
   return {
     withStyles: <Styles extends Promise<unknown>[]>(...styles: Styles) => ({
