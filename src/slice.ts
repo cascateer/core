@@ -269,8 +269,7 @@ export class Slice<
                           }
                         })({ store: this.store, api, terminal: this.terminal }),
                     }).components,
-                    (componentConstructor) =>
-                      componentConstructor.predicate(key),
+                    (componentConstructor) => componentConstructor(key),
                   ),
                 ),
               ),
