@@ -10,8 +10,8 @@ import { asStoreEffects, StoreAdapter, StoreEffects } from "./store";
 import { TerminalAdapter, TerminalEffect } from "./terminal";
 import { Action, Effect } from "./types";
 
-export interface ComponentConstructor<Props extends JSX.Props> {
-  (key: string): JSX.Component<Props>;
+export class ComponentConstructor<Props extends JSX.Props> {
+  constructor(public predicate: UnaryFunction<string, JSX.Component<Props>>) {}
 }
 
 export function createComponent(customElement?: string) {
@@ -26,26 +26,30 @@ export function createComponent(customElement?: string) {
         ...cn: { -readonly [K in keyof Styles]: Awaited<Styles[K]> }
       ) => JSX.Component<Props>,
     ) =>
-    (ctx: Context): ComponentConstructor<Props> =>
-    (key) =>
-    (props) =>
-      createFragment({
-        children: defer(() =>
-          Promise.all(styles).then((cssModules) =>
-            cssStyleSheets(cssModules).then((cssStyleSheets) => {
-              const element = constructor(ctx, ...cssModules)(props);
+      class extends ComponentConstructor<Props> {
+        constructor(ctx: Context) {
+          super(
+            (key) => (props) =>
+              createFragment({
+                children: defer(() =>
+                  Promise.all(styles).then((cssModules) =>
+                    cssStyleSheets(cssModules).then((cssStyleSheets) => {
+                      const element = constructor(ctx, ...cssModules)(props);
 
-              return customElement != null
-                ? new (defineCustomElement(
-                    `${key}-${kebabCase(customElement)}`,
-                  ))(element, cssStyleSheets)
-                : createFragment({
-                    children: element,
-                  }); /* TODO omit cssModules (whole workflow) */
-            }),
-          ),
-        ).pipe(share()),
-      });
+                      return customElement != null
+                        ? new (defineCustomElement(
+                            `${key}-${kebabCase(customElement)}`,
+                          ))(element, cssStyleSheets)
+                        : createFragment({
+                            children: element,
+                          }); /* TODO omit cssModules (whole workflow) */
+                    }),
+                  ),
+                ).pipe(share()),
+              }),
+          );
+        }
+      };
 
   return {
     withStyles: <Styles extends Promise<unknown>[]>(...styles: Styles) => ({
@@ -63,9 +67,11 @@ export function createStandaloneComponent(customElement?: string) {
         ...cn: { -readonly [K in keyof Styles]: Awaited<Styles[K]> }
       ) => JSX.Component<Props>,
     ): JSX.Component<Props> =>
-      createComponent(customElement)
+      new (createComponent(customElement)
         .withStyles(...styles)
-        .withTemplate<{}, Props>((_, ...cn) => constructor(...cn))({})("std");
+        .withTemplate<{}, Props>((_, ...cn) => constructor(...cn)))(
+        {},
+      ).predicate("std");
 
   return {
     withStyles: <Styles extends Promise<unknown>[]>(...styles: Styles) => ({
