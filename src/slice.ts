@@ -77,17 +77,31 @@ interface SliceConfig<
   >;
 }
 
-export const createSlice = <
-  Data,
-  StoreSignals extends Dictionary<ComputedSignal<any>>,
-  StoreActions extends Dictionary<Action<any, any>>,
-  ApiEffects extends Dictionary<ApiEffect<any, any>>,
-  ApiActions extends Dictionary<Action<any, any>>,
-  TerminalEffects extends Dictionary<TerminalEffect<any, any>>,
-  TerminalActions extends Dictionary<Action<any, any>>,
-  Components extends Dictionary<ComponentConstructor<any>>,
->(
-  config: SliceConfig<
+export const createSlice =
+  <Data>(data: Data) =>
+  <
+    StoreSignals extends Dictionary<ComputedSignal<any>>,
+    StoreActions extends Dictionary<Action<any, any>>,
+    ApiEffects extends Dictionary<ApiEffect<any, any>>,
+    ApiActions extends Dictionary<Action<any, any>>,
+    TerminalEffects extends Dictionary<TerminalEffect<any, any>>,
+    TerminalActions extends Dictionary<Action<any, any>>,
+    Components extends Dictionary<ComponentConstructor<any>>,
+  >(
+    config: Omit<
+      SliceConfig<
+        Data,
+        StoreSignals,
+        StoreActions,
+        ApiEffects,
+        ApiActions,
+        TerminalEffects,
+        TerminalActions,
+        Components
+      >,
+      "data"
+    >,
+  ): SliceConfig<
     Data,
     StoreSignals,
     StoreActions,
@@ -96,8 +110,7 @@ export const createSlice = <
     TerminalEffects,
     TerminalActions,
     Components
-  >,
-) => config;
+  > => ({ data, ...config });
 
 export class Slice<
   Data,
