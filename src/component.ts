@@ -62,10 +62,10 @@ export function createStandaloneComponent(customElement?: string) {
       constructor: (
         ...cn: { -readonly [K in keyof Styles]: Awaited<Styles[K]> }
       ) => JSX.Component<Props>,
-    ): ComponentConstructor<Props> =>
+    ): JSX.Component<Props> =>
       createComponent(customElement)
         .withStyles(...styles)
-        .withTemplate<{}, Props>((_, ...cn) => constructor(...cn))({});
+        .withTemplate<{}, Props>((_, ...cn) => constructor(...cn))({})("std");
 
   return {
     withStyles: <Styles extends Promise<unknown>[]>(...styles: Styles) => ({
