@@ -3,7 +3,6 @@ import {
   ExtendableDictionary,
   MaybeArray,
   MaybeObservable,
-  property,
 } from "@cascateer/lib";
 import {
   constant,
@@ -35,7 +34,7 @@ interface TagsConstructor<Args, Result> {
 }
 
 interface MemoizableConfig<Args, Result> {
-  predicate: UnaryFunction<Args, MaybeObservable<{ data: Result }>>;
+  predicate: UnaryFunction<Args, MaybeObservable<Result>>;
   tags?: TagsConstructor<Args, Result> | MaybeArray<string>;
 }
 
@@ -48,8 +47,7 @@ class Memoizable<Args, Result> {
   share: UnaryFunction<NextObserver<string[]>, Action<Args, Result>>;
 
   constructor({ predicate, tags }: MemoizableConfig<Args, Result>) {
-    this.predicate = (args) =>
-      asObservable(predicate(args)).pipe(map(property("data")));
+    this.predicate = (args) => asObservable(predicate(args));
     this.tags = isFunction(tags) ? tags : constant([tags ?? []].flat());
 
     this.subscribe = (invalidatedTags) => {
