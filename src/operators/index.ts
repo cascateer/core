@@ -11,5 +11,4 @@ export {
   type MulticastSubject,
 } from "./multicast";
 export { proxyReplaySubject } from "./proxyReplaySubject";
-export { sequence } from "./sequence";
 export { some } from "./some";

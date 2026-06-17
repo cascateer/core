@@ -1,5 +1,5 @@
 import { property } from "@cascateer/lib";
-import { flatMap } from "@cascateer/lib/operators";
+import { flatMap, sequence } from "@cascateer/lib/operators";
 import { partition, thru, uniq, uniqBy } from "lodash";
 import {
   distinct,
@@ -19,7 +19,6 @@ import {
   MulticastActionMessage,
   MulticastClientMessage,
   proxyReplaySubject,
-  sequence,
 } from "./operators";
 import { MulticastConnectMessage } from "./operators/multicast";
 

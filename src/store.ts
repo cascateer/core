@@ -1,5 +1,5 @@
 import { EndoFunction, ExtendableDictionary } from "@cascateer/lib";
-import { flatMap } from "@cascateer/lib/operators";
+import { flatMap, sequence } from "@cascateer/lib/operators";
 import { constant, Dictionary, mapValues, tap, thru } from "lodash";
 import {
   identity,
@@ -10,7 +10,7 @@ import {
   shareReplay,
   UnaryFunction,
 } from "rxjs";
-import { MulticastAction, MulticastSubject, sequence } from "./operators";
+import { MulticastAction, MulticastSubject } from "./operators";
 import { Serializable } from "./serializable";
 import { ComputedSignal, Signal } from "./signal";
 import { Action } from "./types";
