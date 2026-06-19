@@ -67,7 +67,7 @@ export class ExtendableStoreAdapter<
         key: Promise<string>,
         handler: (
           action: MulticastBaseActionMessage<any, "transformAction">,
-        ) => Promise<MulticastAction<any, "transformAction"> | undefined>,
+        ) => MulticastAction<any, "transformAction">,
       ) => void;
     },
     private extendableSignals: ExtendableDictionary<
@@ -142,7 +142,7 @@ export class ExtendableStoreAdapter<
                             UnaryFunction<unknown, void>
                           >();
 
-                          this.transform.parse(key, async (event) => ({
+                          this.transform.parse(key, (event) => ({
                             ...event,
                             predicate: signal.pull(
                               predicate(
