@@ -70,7 +70,7 @@ export type MulticastClientMessage =
 
 type MulticastMessage = MulticastHostMessage | MulticastClientMessage;
 
-type MulticastMessageConstructor<Message extends MulticastMessage> =
+export type MulticastMessageConstructor<Message extends MulticastMessage> =
   UnaryFunction<Record<"key" | "id", string>, Promise<Message>>;
 
 export interface MulticastSubject extends ProxySubject<

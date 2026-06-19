@@ -11,6 +11,11 @@ import {
   UnaryFunction,
 } from "rxjs";
 import { MulticastAction, MulticastSubject } from "./operators";
+import {
+  MulticastClientMessage,
+  MulticastHostMessage,
+  MulticastMessageConstructor,
+} from "./operators/multicast";
 import { Serializable } from "./serializable";
 import { ComputedSignal, Signal } from "./signal";
 import { Action } from "./types";
@@ -59,14 +64,16 @@ export class ExtendableStoreAdapter<
         Promise<string>,
         {
           share: UnaryFunction<
-            {
-              args: unknown;
-              callback: UnaryFunction<unknown, void>;
-              sameOrigin?: boolean;
-            },
+            MulticastMessageConstructor<MulticastClientMessage>,
             void
           >;
-          register: UnaryFunction<(args: any) => EndoFunction<any>, void>;
+          register: UnaryFunction<
+            UnaryFunction<
+              MulticastHostMessage,
+              Promise<MulticastAction<any, "transformAction"> | undefined>
+            >,
+            void
+          >;
         }
       >;
     },
@@ -138,13 +145,46 @@ export class ExtendableStoreAdapter<
                       (signal) => ({
                         update: (predicate, config = {}) =>
                           thru(this.context.transform(key), (transform) => {
-                            transform.register((args) =>
-                              signal.pull(predicate(args)),
-                            );
+                            const callbacks = new Map<
+                              string,
+                              UnaryFunction<unknown, void>
+                            >();
+
+                            transform.register(async (event) => {
+                              if (
+                                event.type === "transformAction" &&
+                                event.data.key === (await key)
+                              ) {
+                                return {
+                                  ...event,
+                                  predicate: signal.pull(
+                                    predicate(
+                                      Serializable.parse(
+                                        event.data.args ?? null,
+                                      ),
+                                    ),
+                                  ),
+                                  callback: callbacks.get(event.id),
+                                };
+                              }
+                            });
 
                             return (args) =>
                               new Promise<unknown>((callback) =>
-                                transform.share({ args, callback, ...config }),
+                                transform.share(
+                                  async ({ id }) => (
+                                    callbacks.set(id, callback),
+                                    {
+                                      id,
+                                      type: "transformAction",
+                                      data: {
+                                        key: await key,
+                                        args: JSON.stringify(args),
+                                      },
+                                      sameOrigin: config.sameOrigin,
+                                    }
+                                  ),
+                                ),
                               );
                           }),
                       }),
@@ -182,40 +222,13 @@ export class StoreProvider<Data> extends ExtendableStoreAdapter<
     super(
       {
         transform: (key) => ({
-          share: ({ args, callback, sameOrigin }) =>
-            actions.next(
-              async ({ id }) => (
-                callbacks.set(id, callback),
-                {
-                  id,
-                  type: "transformAction",
-                  data: {
-                    key: await key,
-                    args: JSON.stringify(args),
-                  },
-                  sameOrigin,
-                }
-              ),
-            ),
-          register: (transform) =>
+          share: (messageConstructor) => actions.next(messageConstructor),
+          register: (project) =>
             actions
               .pipe(
-                mergeMap(async (event) => {
-                  if (
-                    event.type === "transformAction" &&
-                    event.data.key === (await key)
-                  ) {
-                    return {
-                      ...event,
-                      predicate: transform(
-                        Serializable.parse(event.data.args ?? null),
-                      ),
-                      callback: callbacks.get(event.id),
-                    };
-                  }
-
-                  return [];
-                }),
+                mergeMap((event) =>
+                  project(event).then((action) => action ?? []),
+                ),
                 flatMap(identity),
               )
               .subscribe(transformActions),
