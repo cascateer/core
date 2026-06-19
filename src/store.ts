@@ -1,8 +1,7 @@
 import { EndoFunction, ExtendableDictionary } from "@cascateer/lib";
 import { chain, flatMap } from "@cascateer/lib/observables";
-import { constant, Dictionary, mapValues, tap, thru } from "lodash";
+import { constant, Dictionary, mapValues, tap } from "lodash";
 import {
-  identity,
   merge,
   mergeMap,
   Observable,
@@ -60,21 +59,16 @@ export class ExtendableStoreAdapter<
 
   constructor(
     public context: {
-      transform: UnaryFunction<
-        Promise<string>,
-        {
-          share: UnaryFunction<
-            MulticastMessageConstructor<MulticastClientMessage>,
-            void
-          >;
-          register: UnaryFunction<
-            UnaryFunction<
-              MulticastHostMessage,
-              Promise<MulticastAction<any, "transformAction"> | undefined>
-            >,
-            void
-          >;
-        }
+      share: UnaryFunction<
+        MulticastMessageConstructor<MulticastClientMessage>,
+        void
+      >;
+      register: UnaryFunction<
+        UnaryFunction<
+          MulticastHostMessage,
+          Promise<MulticastAction<any, "transformAction"> | undefined>
+        >,
+        void
       >;
     },
     private extendableSignals: ExtendableDictionary<
@@ -143,50 +137,47 @@ export class ExtendableStoreAdapter<
                     mapValues(
                       this.extendableSignals.currentValue,
                       (signal) => ({
-                        update: (predicate, config = {}) =>
-                          thru(this.context.transform(key), (transform) => {
-                            const callbacks = new Map<
-                              string,
-                              UnaryFunction<unknown, void>
-                            >();
+                        update: (predicate, config = {}) => {
+                          const callbacks = new Map<
+                            string,
+                            UnaryFunction<unknown, void>
+                          >();
 
-                            transform.register(async (event) => {
-                              if (
-                                event.type === "transformAction" &&
-                                event.data.key === (await key)
-                              ) {
-                                return {
-                                  ...event,
-                                  predicate: signal.pull(
-                                    predicate(
-                                      Serializable.parse(
-                                        event.data.args ?? null,
-                                      ),
-                                    ),
-                                  ),
-                                  callback: callbacks.get(event.id),
-                                };
-                              }
-                            });
-
-                            return (args) =>
-                              new Promise<unknown>((callback) =>
-                                transform.share(
-                                  async ({ id }) => (
-                                    callbacks.set(id, callback),
-                                    {
-                                      id,
-                                      type: "transformAction",
-                                      data: {
-                                        key: await key,
-                                        args: JSON.stringify(args),
-                                      },
-                                      sameOrigin: config.sameOrigin,
-                                    }
+                          this.context.register(async (event) => {
+                            if (
+                              event.type === "transformAction" &&
+                              event.data.key === (await key)
+                            ) {
+                              return {
+                                ...event,
+                                predicate: signal.pull(
+                                  predicate(
+                                    Serializable.parse(event.data.args ?? null),
                                   ),
                                 ),
-                              );
-                          }),
+                                callback: callbacks.get(event.id),
+                              };
+                            }
+                          });
+
+                          return (args) =>
+                            new Promise<unknown>((callback) =>
+                              this.context.share(
+                                async ({ id }) => (
+                                  callbacks.set(id, callback),
+                                  {
+                                    id,
+                                    type: "transformAction",
+                                    data: {
+                                      key: await key,
+                                      args: JSON.stringify(args),
+                                    },
+                                    sameOrigin: config.sameOrigin,
+                                  }
+                                ),
+                              ),
+                            );
+                        },
                       }),
                     ),
                   ),
@@ -217,22 +208,16 @@ export class StoreProvider<Data> extends ExtendableStoreAdapter<
         ),
       );
 
-    const callbacks = new Map<string, UnaryFunction<unknown, void>>();
-
     super(
       {
-        transform: (key) => ({
-          share: (messageConstructor) => actions.next(messageConstructor),
-          register: (project) =>
-            actions
-              .pipe(
-                mergeMap((event) =>
-                  project(event).then((action) => action ?? []),
-                ),
-                flatMap(identity),
-              )
-              .subscribe(transformActions),
-        }),
+        share: (action) => actions.next(action),
+        register: (project) =>
+          actions
+            .pipe(
+              mergeMap(project),
+              flatMap((action) => action ?? []),
+            )
+            .subscribe(transformActions),
       },
       new ExtendableDictionary({
         data: new ComputedSignal({
