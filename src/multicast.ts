@@ -1,5 +1,5 @@
 import { property } from "@cascateer/lib";
-import { flatMap, sequence } from "@cascateer/lib/operators";
+import { chain, flatMap } from "@cascateer/lib/observables";
 import { partition, thru, uniq, uniqBy } from "lodash";
 import {
   distinct,
@@ -84,7 +84,7 @@ self.addEventListener("connect", ({ ports }) => {
         flatMap(({ ports, actions }) => (ports.includes(port) ? actions : [])),
         distinct(property("id")),
         filter((message) => !message.sameOrigin || message.origin === port),
-        sequence(([action, previousAction]) =>
+        chain(([action, previousAction]) =>
           action.type === "seedAction"
             ? action
             : { ...action, previousId: previousAction!.id },

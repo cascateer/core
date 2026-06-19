@@ -1,5 +1,5 @@
 import { asArray, asObservable } from "@cascateer/lib";
-import { flatMap } from "@cascateer/lib/operators";
+import { flatMap } from "@cascateer/lib/observables";
 import { tap } from "lodash";
 import {
   combineLatest,

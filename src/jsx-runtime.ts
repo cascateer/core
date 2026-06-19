@@ -6,7 +6,7 @@ import {
   MaybeObservable,
   MaybeObservableInputTuple,
 } from "@cascateer/lib";
-import { sequence } from "@cascateer/lib/operators";
+import { chain } from "@cascateer/lib/observables";
 import { bind, camelCase, isFunction, isObject } from "lodash";
 import React, { CSSProperties } from "react";
 import {
@@ -151,7 +151,7 @@ export const createElement = (
                     ),
                   )
                     .pipe(
-                      sequence(([style], [previousStyle]) => {
+                      chain(([style], [previousStyle]) => {
                         if (previousStyle != null) {
                           for (const name in previousStyle) {
                             element.style.removeProperty(name);
