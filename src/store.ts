@@ -11,8 +11,8 @@ import {
 } from "rxjs";
 import { MulticastAction, MulticastSubject } from "./operators";
 import {
+  MulticastBaseActionMessage,
   MulticastClientMessage,
-  MulticastHostMessage,
   MulticastMessageConstructor,
 } from "./operators/multicast";
 import { Serializable } from "./serializable";
@@ -58,18 +58,17 @@ export class ExtendableStoreAdapter<
   }
 
   constructor(
-    public context: {
+    public transform: {
       share: UnaryFunction<
         MulticastMessageConstructor<MulticastClientMessage>,
         void
       >;
-      register: UnaryFunction<
-        UnaryFunction<
-          MulticastHostMessage,
-          Promise<MulticastAction<any, "transformAction"> | undefined>
-        >,
-        void
-      >;
+      parse: (
+        key: Promise<string>,
+        handler: (
+          action: MulticastBaseActionMessage<any, "transformAction">,
+        ) => Promise<MulticastAction<any, "transformAction"> | undefined>,
+      ) => void;
     },
     private extendableSignals: ExtendableDictionary<
       ComputedSignal<any>,
@@ -89,7 +88,7 @@ export class ExtendableStoreAdapter<
     >,
   ) {
     return new ExtendableStoreAdapter(
-      this.context,
+      this.transform,
       this.extendableSignals.extend(
         (currentSignals) => () =>
           signals({
@@ -125,7 +124,7 @@ export class ExtendableStoreAdapter<
     >,
   ) {
     return new ExtendableStoreAdapter(
-      this.context,
+      this.transform,
       this.extendableSignals,
       this.extendableActions.extend(
         () =>
@@ -143,26 +142,19 @@ export class ExtendableStoreAdapter<
                             UnaryFunction<unknown, void>
                           >();
 
-                          this.context.register(async (event) => {
-                            if (
-                              event.type === "transformAction" &&
-                              event.data.key === (await key)
-                            ) {
-                              return {
-                                ...event,
-                                predicate: signal.pull(
-                                  predicate(
-                                    Serializable.parse(event.data.args ?? null),
-                                  ),
-                                ),
-                                callback: callbacks.get(event.id),
-                              };
-                            }
-                          });
+                          this.transform.parse(key, async (event) => ({
+                            ...event,
+                            predicate: signal.pull(
+                              predicate(
+                                Serializable.parse(event.data.args ?? null),
+                              ),
+                            ),
+                            callback: callbacks.get(event.id),
+                          }));
 
                           return (args) =>
                             new Promise<unknown>((callback) =>
-                              this.context.share(
+                              this.transform.share(
                                 async ({ id }) => (
                                   callbacks.set(id, callback),
                                   {
@@ -211,10 +203,17 @@ export class StoreProvider<Data> extends ExtendableStoreAdapter<
     super(
       {
         share: (action) => actions.next(action),
-        register: (project) =>
+        parse: (key, handler) =>
           actions
             .pipe(
-              mergeMap(project),
+              mergeMap(async (event) => {
+                if (
+                  event.type === "transformAction" &&
+                  event.data.key === (await key)
+                ) {
+                  return handler(event);
+                }
+              }),
               flatMap((action) => action ?? []),
             )
             .subscribe(transformActions),

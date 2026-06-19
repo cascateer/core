@@ -31,7 +31,7 @@ interface MulticastActions<Data> {
   };
 }
 
-type MulticastBaseActionMessage<
+export type MulticastBaseActionMessage<
   Data,
   Type extends keyof MulticastActions<Data>,
 > = MulticastBaseMessage<Type, MulticastActions<Data>[Type]["data"]>;
