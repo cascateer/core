@@ -6,8 +6,8 @@ import {
   MaybeObservable,
   MaybeObservableInputTuple,
 } from "@cascateer/lib";
-import { chain } from "@cascateer/lib/observables";
-import { bind, camelCase, isFunction, isObject } from "lodash";
+import { reduce } from "@cascateer/lib/observables";
+import { bind, camelCase, Dictionary, isFunction, isObject } from "lodash";
 import React, { CSSProperties } from "react";
 import {
   combineLatest,
@@ -139,6 +139,17 @@ export const createElement = (
                 );
               } else if (name === "style") {
                 if (isObject(propertyValue)) {
+                  const assignStyles = (
+                    target: CSSStyleDeclaration,
+                    source: Dictionary<unknown>,
+                  ) => {
+                    for (const [name, value] of Object.entries(source)) {
+                      target.setProperty(name, String(value));
+                    }
+
+                    return source;
+                  };
+
                   combineLatest(
                     Object.entries(propertyValue).reduce<
                       ObservableInputTuple<Record<string, unknown>>
@@ -151,19 +162,16 @@ export const createElement = (
                     ),
                   )
                     .pipe(
-                      chain(([style], [previousStyle]) => {
-                        if (previousStyle != null) {
+                      reduce(
+                        (previousStyle, style) => {
                           for (const name in previousStyle) {
                             element.style.removeProperty(name);
                           }
-                        }
 
-                        for (const [name, value] of Object.entries(style)) {
-                          element.style.setProperty(name, String(value));
-                        }
-
-                        return style;
-                      }),
+                          return assignStyles(element.style, style);
+                        },
+                        (style) => assignStyles(element.style, style),
+                      ),
                     )
                     .subscribe();
                 }
