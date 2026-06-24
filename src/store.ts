@@ -1,6 +1,5 @@
 import { EndoFunction, ExtendableDictionary } from "@cascateer/lib";
 import { flatMap, reduce } from "@cascateer/lib/observables";
-import assert from "assert";
 import { constant, Dictionary, mapValues, noop, tap } from "lodash";
 import {
   merge,
@@ -230,18 +229,22 @@ export class StoreProvider<Data> extends ExtendableStoreAdapter<
                   return action.predicate();
                 }
 
-                assert(action.previousId === previousAction?.id);
+                if (action.previousId === previousAction?.id) {
+                  return tap(
+                    action.predicate(previousState),
+                    action.callback ?? noop,
+                  );
+                }
 
-                return tap(
-                  action.predicate(previousState),
-                  action.callback ?? noop,
-                );
+                throw new Error();
               },
-              (action) => (
-                console.log(action),
-                assert(action.type === "seedAction"),
-                action.predicate()
-              ),
+              (action) => {
+                if (action.type === "seedAction") {
+                  return tap(action, console.log).predicate();
+                }
+
+                throw new Error();
+              },
             ),
             shareReplay(1),
           ),
