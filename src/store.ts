@@ -1,7 +1,7 @@
 import { EndoFunction, ExtendableDictionary } from "@cascateer/lib";
 import { flatMap, reduce } from "@cascateer/lib/observables";
 import assert from "assert";
-import { constant, Dictionary, mapValues, tap } from "lodash";
+import { constant, Dictionary, mapValues, noop, tap } from "lodash";
 import {
   merge,
   mergeMap,
@@ -232,11 +232,13 @@ export class StoreProvider<Data> extends ExtendableStoreAdapter<
 
                 assert(action.previousId === previousAction?.id);
 
-                return tap(action.predicate(previousState), (state) =>
-                  action.callback?.call(null, state),
+                return tap(
+                  action.predicate(previousState),
+                  action.callback ?? noop,
                 );
               },
               (action) => (
+                console.log(action),
                 assert(action.type === "seedAction"),
                 action.predicate()
               ),
