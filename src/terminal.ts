@@ -115,7 +115,7 @@ export class ExtendableTerminalAdapter<
                 actions: StoreActions;
               };
               api: {
-                effect: ApiEffects;
+                effects: ApiEffects;
                 actions: ApiActions;
               };
               terminal: {
