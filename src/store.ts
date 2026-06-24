@@ -238,7 +238,6 @@ export class StoreProvider<Data> extends ExtendableStoreAdapter<
                 );
               },
               (action) => (
-                console.log(action),
                 assert(action.type === "seedAction"),
                 action.predicate()
               ),
