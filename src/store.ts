@@ -240,7 +240,7 @@ export class StoreProvider<Data> extends ExtendableStoreAdapter<
               },
               (action) => {
                 if (action.type === "seedAction") {
-                  return tap(action, console.log).predicate();
+                  return action.predicate();
                 }
 
                 throw new Error();
