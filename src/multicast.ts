@@ -88,11 +88,11 @@ self.addEventListener("connect", ({ ports }) => {
           ({ id: previousId }, action) =>
             action.type === "seedAction" ? action : { ...action, previousId },
           (action) => {
-            if (action.type !== "seedAction") {
-              throw new Error();
+            if (action.type === "seedAction") {
+              return action;
             }
 
-            return action;
+            throw new Error();
           },
         ),
         map(({ origin, ...message }) => message),
