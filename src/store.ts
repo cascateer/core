@@ -1,5 +1,6 @@
 import { EndoFunction, ExtendableDictionary } from "@cascateer/lib";
-import { chain, flatMap } from "@cascateer/lib/observables";
+import { flatMap, reduce } from "@cascateer/lib/observables";
+import assert from "assert";
 import { constant, Dictionary, mapValues, tap } from "lodash";
 import {
   merge,
@@ -221,25 +222,24 @@ export class StoreProvider<Data> extends ExtendableStoreAdapter<
       new ExtendableDictionary({
         data: new ComputedSignal({
           value: merge(seedActions, transformActions).pipe(
-            chain<MulticastAction<Data>, Data>(
-              ([action, previousAction], previousStates) => {
+            reduce<MulticastAction<Data>, Data>(
+              (previousState, action, previousAction) => {
                 console.log(action);
 
                 if (action.type === "seedAction") {
                   return action.predicate();
                 }
 
-                if (
-                  action.previousId !== previousAction?.id ||
-                  !(0 in previousStates)
-                ) {
-                  throw new Error();
-                }
+                assert(action.previousId !== previousAction?.id);
 
-                return tap(action.predicate(previousStates[0]), (state) =>
+                return tap(action.predicate(previousState), (state) =>
                   action.callback?.call(null, state),
                 );
               },
+              (action) => (
+                assert(action.type === "seedAction"),
+                action.predicate()
+              ),
             ),
             shareReplay(1),
           ),

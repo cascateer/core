@@ -85,7 +85,7 @@ self.addEventListener("connect", ({ ports }) => {
         flatMap(({ ports, actions }) => (ports.includes(port) ? actions : [])),
         distinct(property("id")),
         filter((message) => !message.sameOrigin || message.origin === port),
-        reduce<MulticastActionMessage<any>>(
+        reduce(
           ({ id: previousId }, action) =>
             action.type === "seedAction" ? action : { ...action, previousId },
           (action) => (assert(action.type === "seedAction"), action),
