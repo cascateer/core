@@ -1,15 +1,19 @@
 import {
+  asArray,
+  asFunction,
   asObservable,
   ExtendableDictionary,
   MaybeArray,
+  MaybeFunction,
   MaybeObservable,
 } from "@cascateer/lib";
 import {
-  constant,
   Dictionary,
+  flow,
+  Function1,
+  Function2,
   intersectionWith,
   isEqual,
-  isFunction,
 } from "lodash";
 import {
   combineLatest,
@@ -23,32 +27,27 @@ import {
   shareReplay,
   Subject,
   tap,
-  UnaryFunction,
 } from "rxjs";
 import { memoize } from "./lib/memoize";
 import { ProxyObservable } from "./observable";
 import { Action, ProxyEffect } from "./types";
 
-interface TagsConstructor<Args, Result> {
-  (args: Args, result: Result): string[];
-}
-
 interface MemoizableConfig<Args, Result> {
-  predicate: UnaryFunction<Args, MaybeObservable<Result>>;
-  tags?: TagsConstructor<Args, Result> | MaybeArray<string>;
+  predicate: Function1<Args, MaybeObservable<Result>>;
+  tags?: MaybeFunction<[Args, Result], MaybeArray<string>>;
 }
 
 class Memoizable<Args, Result> {
-  predicate: UnaryFunction<Args, Observable<Result>>;
-  tags: TagsConstructor<Args, Result>;
+  predicate: Function1<Args, Observable<Result>>;
+  tags: Function2<Args, Result, string[]>;
 
-  subscribe: UnaryFunction<Observable<string[]>, ProxyEffect<Args, Result>>;
+  subscribe: Function1<Observable<string[]>, ProxyEffect<Args, Result>>;
 
-  share: UnaryFunction<NextObserver<string[]>, Action<Args, Result>>;
+  share: Function1<NextObserver<string[]>, Action<Args, Result>>;
 
   constructor({ predicate, tags }: MemoizableConfig<Args, Result>) {
     this.predicate = (args) => asObservable(predicate(args));
-    this.tags = isFunction(tags) ? tags : constant([tags ?? []].flat());
+    this.tags = flow(asFunction(tags ?? []), asArray);
 
     this.subscribe = (invalidatedTags) => {
       const memoizedEffect: ProxyEffect<Args, Result> = memoize(
@@ -91,7 +90,7 @@ export interface ApiEffect<Args, Result> extends ProxyEffect<Args, Result> {}
 
 type ApiAdapterPropertyConstructor<Source, Type extends "effect" | "action"> = {
   [T in Type]: <Args, Result>(
-    config: UnaryFunction<Source, MemoizableConfig<Args, Result>>,
+    config: Function1<Source, MemoizableConfig<Args, Result>>,
   ) => T extends "effect" ? ApiEffect<Args, Result> : Action<Args, Result>;
 }[Type];
 
@@ -130,7 +129,7 @@ export class ExtendableApiAdapter<
   ) {}
 
   provideEffects<MoreEffects extends Dictionary<ApiEffect<any, any>>>(
-    effects: UnaryFunction<
+    effects: Function1<
       { effect: ApiAdapterPropertyConstructor<Source, "effect"> },
       MoreEffects
     >,
@@ -151,7 +150,7 @@ export class ExtendableApiAdapter<
   }
 
   provideActions<MoreActions extends Dictionary<Action<any, any>>>(
-    actions: UnaryFunction<
+    actions: Function1<
       { action: ApiAdapterPropertyConstructor<Source, "action"> },
       MoreActions
     >,
