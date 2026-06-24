@@ -19,6 +19,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/lodash": "^4.17.24",
+    "@types/node": "^26.0.0",
     "@types/object-hash": "^3.0.6",
     "@types/react": "^19.2.17",
     "globals": "^17.7.0",
@@ -28,7 +29,7 @@
     "vitest": "^4.1.9"
   },
   "dependencies": {
-    "@cascateer/lib": "^1.0.36",
+    "@cascateer/lib": "^1.0.40",
     "lodash": "^4.18.1",
     "object-hash": "^3.0.0",
     "rxjs": "^7.8.2",

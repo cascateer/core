@@ -1,5 +1,6 @@
 import { property } from "@cascateer/lib";
-import { chain, flatMap } from "@cascateer/lib/observables";
+import { flatMap, reduce } from "@cascateer/lib/observables";
+import assert from "assert";
 import { partition, thru, uniq, uniqBy } from "lodash";
 import {
   distinct,
@@ -84,10 +85,10 @@ self.addEventListener("connect", ({ ports }) => {
         flatMap(({ ports, actions }) => (ports.includes(port) ? actions : [])),
         distinct(property("id")),
         filter((message) => !message.sameOrigin || message.origin === port),
-        chain(([action, previousAction]) =>
-          action.type === "seedAction"
-            ? action
-            : { ...action, previousId: previousAction!.id },
+        reduce<MulticastActionMessage<any>>(
+          ({ id: previousId }, action) =>
+            action.type === "seedAction" ? action : { ...action, previousId },
+          (action) => (assert(action.type === "seedAction"), action),
         ),
         map(({ origin, ...message }) => message),
         exchangeWith<MulticastClientMessage, MulticastActionMessage<any>>(port),
