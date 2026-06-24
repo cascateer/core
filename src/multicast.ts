@@ -1,6 +1,6 @@
 import { property } from "@cascateer/lib";
 import { flatMap, reduce } from "@cascateer/lib/observables";
-import { partition, thru, uniq, uniqBy } from "lodash";
+import { partition, tap, thru, uniq, uniqBy } from "lodash";
 import {
   distinct,
   filter,
@@ -20,7 +20,11 @@ import {
   MulticastClientMessage,
   proxyReplaySubject,
 } from "./operators";
-import { MulticastConnectMessage } from "./operators/multicast";
+import {
+  assertIsMulticastSeedActionMessage,
+  isMulticastSeedActionMessage,
+  MulticastConnectMessage,
+} from "./operators/multicast";
 
 declare var self: ServiceWorkerGlobalScope;
 
@@ -86,14 +90,10 @@ self.addEventListener("connect", ({ ports }) => {
         filter((message) => !message.sameOrigin || message.origin === port),
         reduce(
           ({ id: previousId }, action) =>
-            action.type === "seedAction" ? action : { ...action, previousId },
-          (action) => {
-            if (action.type === "seedAction") {
-              return action;
-            }
-
-            throw new Error();
-          },
+            isMulticastSeedActionMessage(action)
+              ? action
+              : { ...action, previousId },
+          (action) => tap(action, assertIsMulticastSeedActionMessage),
         ),
         map(({ origin, ...message }) => message),
         exchangeWith<MulticastClientMessage, MulticastActionMessage<any>>(port),

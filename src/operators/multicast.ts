@@ -6,7 +6,7 @@ import { ComputedSignal } from "../signal";
 import { exchangeWith } from "./exchangeWith";
 import { proxyReplaySubject } from "./proxyReplaySubject";
 
-interface MulticastBaseMessage<Type, Data> {
+interface MulticastBaseMessage<Data, Type> {
   id: string;
   previousId?: string;
   type: Type;
@@ -34,11 +34,24 @@ interface MulticastActions<Data> {
 export type MulticastBaseActionMessage<
   Data,
   Type extends keyof MulticastActions<Data>,
-> = MulticastBaseMessage<Type, MulticastActions<Data>[Type]["data"]>;
+> = MulticastBaseMessage<MulticastActions<Data>[Type]["data"], Type>;
 
 export type MulticastActionMessage<Data> =
   | MulticastBaseActionMessage<Data, "seedAction">
   | MulticastBaseActionMessage<Data, "transformAction">;
+
+export const isMulticastSeedActionMessage = <Data>(
+  action: MulticastActionMessage<Data>,
+): action is MulticastBaseActionMessage<Data, "seedAction"> =>
+  action.type === "seedAction";
+
+export const assertIsMulticastSeedActionMessage = <Data>(
+  action: MulticastActionMessage<Data>,
+): asserts action is MulticastBaseActionMessage<Data, "seedAction"> => {
+  if (!isMulticastSeedActionMessage(action)) {
+    throw new Error();
+  }
+};
 
 export type MulticastAction<
   Data,
@@ -59,8 +72,8 @@ export interface MulticastConnectMessageData {
 }
 
 export type MulticastConnectMessage = MulticastBaseMessage<
-  "connect",
-  MulticastConnectMessageData
+  MulticastConnectMessageData,
+  "connect"
 >;
 
 export type MulticastHostMessage = MulticastActionMessage<any>;

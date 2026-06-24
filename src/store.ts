@@ -7,10 +7,13 @@ import {
   Observable,
   ReplaySubject,
   shareReplay,
+  tap as tapOperator,
   UnaryFunction,
 } from "rxjs";
 import { MulticastAction, MulticastSubject } from "./operators";
 import {
+  assertIsMulticastSeedActionMessage,
+  isMulticastSeedActionMessage,
   MulticastBaseActionMessage,
   MulticastClientMessage,
   MulticastMessageConstructor,
@@ -221,30 +224,26 @@ export class StoreProvider<Data> extends ExtendableStoreAdapter<
       new ExtendableDictionary({
         data: new ComputedSignal({
           value: merge(seedActions, transformActions).pipe(
+            tapOperator((action) => console.log(action)),
             reduce<MulticastAction<Data>, Data>(
               (previousState, action, previousAction) => {
-                console.log(action);
-
-                if (action.type === "seedAction") {
+                if (isMulticastSeedActionMessage(action)) {
                   return action.predicate();
                 }
 
-                if (action.previousId === previousAction?.id) {
-                  return tap(
-                    action.predicate(previousState),
-                    action.callback ?? noop,
-                  );
+                if (action.previousId !== previousAction?.id) {
+                  throw new Error();
                 }
 
-                throw new Error();
+                return tap(
+                  action.predicate(previousState),
+                  action.callback ?? noop,
+                );
               },
-              (action) => {
-                if (action.type === "seedAction") {
-                  return action.predicate();
-                }
-
-                throw new Error();
-              },
+              (action) => (
+                assertIsMulticastSeedActionMessage(action),
+                action.predicate()
+              ),
             ),
             shareReplay(1),
           ),
