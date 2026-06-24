@@ -230,7 +230,7 @@ export class StoreProvider<Data> extends ExtendableStoreAdapter<
                   return action.predicate();
                 }
 
-                assert(action.previousId !== previousAction?.id);
+                assert(action.previousId === previousAction?.id);
 
                 return tap(action.predicate(previousState), (state) =>
                   action.callback?.call(null, state),
