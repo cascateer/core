@@ -115,6 +115,7 @@ export class ExtendableTerminalAdapter<
                 actions: StoreActions;
               };
               api: {
+                effect: ApiEffects;
                 actions: ApiActions;
               };
               terminal: {
@@ -142,6 +143,7 @@ export class ExtendableTerminalAdapter<
                   actions: this.context.store.actions,
                 },
                 api: {
+                  effect: this.context.api.effects,
                   actions: this.context.api.actions,
                 },
                 terminal: {
