@@ -20,7 +20,7 @@ export const defineCustomElement = memoize((key: string) => {
   return constructor;
 });
 
-export const defineCustomProperties = (
+export const registerCustomProperties = (
   definitions: Partial<JSX.CSSCustomPropertyDefinitions>,
 ) => {
   for (const [name, definition] of Object.entries(definitions)) {
