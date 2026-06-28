@@ -71,7 +71,7 @@ export function createStandaloneComponent(customElement?: string) {
         .withStyles(...styles)
         .withTemplate<{}, Props>((_, ...classNames) =>
           constructor(...classNames),
-        ))({}).predicate("cct");
+        ))({}).predicate("csc");
 
   return {
     withStyles: <Styles extends Promise<unknown>[]>(...styles: Styles) => ({
