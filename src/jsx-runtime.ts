@@ -17,7 +17,8 @@ import {
   Observer,
   UnaryFunction,
 } from "rxjs";
-import { Leaf, ObservableFragment } from "./fragment";
+import { Primitive } from "utility-types";
+import { ObservableFragment } from "./fragment";
 
 type DocumentEventListener<EventName extends keyof DocumentEventMap> =
   | Partial<Observer<DocumentEventMap[EventName]>>
@@ -25,7 +26,7 @@ type DocumentEventListener<EventName extends keyof DocumentEventMap> =
 
 declare global {
   namespace JSX {
-    type Element = MaybeObservable<Node | Leaf>;
+    type Element = MaybeObservable<Node | Primitive>;
 
     type Children = MaybeObservable<MaybeArray<Element>>;
 

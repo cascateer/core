@@ -1,4 +1,4 @@
 {
   "workbench.editor.customLabels.enabled": true,
-  "eslint.rules.customizations": [{ "rule": "*", "severity": "warn" }]
+  "eslint.rules.customizations": [{ "rule": "*", "severity": "off" }]
 }

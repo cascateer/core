@@ -14,21 +14,9 @@ import {
   Subscription,
   switchMap,
 } from "rxjs";
+import { isPrimitive } from "utility-types";
 
-export type Leaf =
-  | string
-  | number
-  | bigint
-  | boolean
-  | symbol
-  | null
-  | undefined;
-
-const isLeaf = (value: unknown): value is Leaf =>
-  ["string", "number", "bigint", "boolean", "symbol"].includes(typeof value) ||
-  value == null;
-
-const insert = <T extends Node>(...nodes: T[]) => ({
+const insertNodes = <T extends Node>(...nodes: T[]) => ({
   before: (child: Node | null): T[] => {
     for (const node of nodes) {
       child?.parentNode?.insertBefore(node, child);
@@ -38,7 +26,7 @@ const insert = <T extends Node>(...nodes: T[]) => ({
   },
 });
 
-const remove = <T extends Node>(...nodes: T[]) => {
+const removeNodes = <T extends Node>(...nodes: T[]) => {
   for (const node of nodes) {
     node.parentNode?.removeChild(node);
   }
@@ -68,7 +56,7 @@ class AnchorFragment extends DocumentFragment {
     scan((anchor, removedNodes) => {
       if (removedNodes.includes(anchor.next)) {
         if (anchor.current != null) {
-          remove(anchor.current);
+          removeNodes(anchor.current);
         }
 
         return this.appendAnchor(anchor.next);
@@ -102,15 +90,18 @@ export class ObservableFragment extends AnchorFragment {
                 element instanceof ObservableFragment
                   ? element.nodes
                   : of(
-                      isLeaf(element) ? new Text(element?.toString()) : element,
+                      isPrimitive(element)
+                        ? new Text(element?.toString())
+                        : element,
                     ),
               ),
-              startWith(),
             ),
           ),
+        ).pipe(
+          startWith([new Comment("void")]),
+          map((nodes) => nodes.flat()),
         ),
       ),
-      map((nodes) => nodes.flat()),
     );
   }
 
@@ -121,8 +112,8 @@ export class ObservableFragment extends AnchorFragment {
       .pipe(
         scan(
           (currentNodes, [anchor, nextNodes]) => (
-            remove(...currentNodes),
-            insert(...nextNodes).before(anchor)
+            removeNodes(...currentNodes),
+            insertNodes(...nextNodes).before(anchor)
           ),
           new Array<Node>(),
         ),
