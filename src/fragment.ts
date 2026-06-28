@@ -98,7 +98,7 @@ export class ObservableFragment extends AnchorFragment {
             ),
           ),
         ).pipe(
-          startWith([new Comment("void")]),
+          startWith([new Comment("child-nodes")]),
           map((nodes) => nodes.flat()),
         ),
       ),
