@@ -1,5 +1,5 @@
 import { EndoFunction, ExtendableDictionary } from "@cascateer/lib";
-import { flatMap, reduce } from "@cascateer/lib/observables";
+import { flatMap, reduce } from "@cascateer/lib/observable";
 import { constant, Dictionary, mapValues, noop, tap } from "lodash";
 import {
   merge,

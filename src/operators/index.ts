@@ -10,5 +10,4 @@ export {
   type MulticastHostMessage,
   type MulticastSubject,
 } from "./multicast";
-export { proxyReplaySubject } from "./proxyReplaySubject";
 export { some } from "./some";

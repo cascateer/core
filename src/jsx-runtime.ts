@@ -6,7 +6,7 @@ import {
   MaybeObservable,
   MaybeObservableInputTuple,
 } from "@cascateer/lib";
-import { reduce } from "@cascateer/lib/observables";
+import { reduce } from "@cascateer/lib/observable";
 import { bind, camelCase, Dictionary, isFunction, isObject } from "lodash";
 import React, { CSSProperties } from "react";
 import {

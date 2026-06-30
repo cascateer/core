@@ -1,10 +1,9 @@
 import { EndoFunction } from "@cascateer/lib";
+import { ProxyReplaySubject, ProxySubject } from "@cascateer/lib/observable";
 import { concatMap, shareReplay, startWith, UnaryFunction } from "rxjs";
 import { v4 } from "uuid";
-import { ProxySubject } from "../observable";
 import { ComputedSignal } from "../signal";
 import { exchangeWith } from "./exchangeWith";
-import { proxyReplaySubject } from "./proxyReplaySubject";
 
 interface MulticastBaseMessage<Data, Type> {
   id: string;
@@ -95,7 +94,7 @@ export const multicast = <Seed>(
   key: Promise<string>,
   seed: Seed,
 ): MulticastSubject =>
-  proxyReplaySubject((messages) =>
+  new ProxyReplaySubject((messages) =>
     messages.pipe(
       startWith(
         ({ key, id }): MulticastConnectMessage => ({

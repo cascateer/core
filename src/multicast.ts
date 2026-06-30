@@ -1,5 +1,5 @@
 import { property } from "@cascateer/lib";
-import { flatMap, reduce } from "@cascateer/lib/observables";
+import { flatMap, ProxyReplaySubject, reduce } from "@cascateer/lib/observable";
 import { partition, tap, thru, uniq, uniqBy } from "lodash";
 import {
   distinct,
@@ -18,7 +18,6 @@ import {
   exchangeWith,
   MulticastActionMessage,
   MulticastClientMessage,
-  proxyReplaySubject,
 } from "./operators";
 import {
   assertIsMulticastSeedActionMessage,
@@ -44,7 +43,7 @@ type OutMessages = {
   ports: MessagePort[];
 };
 
-const actions = proxyReplaySubject<Observable<InMessages>, OutMessages>(
+const actions = new ProxyReplaySubject<Observable<InMessages>, OutMessages>(
   (messages) =>
     messages.pipe(
       mergeAll(),
