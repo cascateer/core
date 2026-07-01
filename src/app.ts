@@ -1,7 +1,7 @@
+import { createRoot } from "@cascateer/core/jsx-runtime";
 import { property } from "@cascateer/lib";
 import { Dictionary, mapValues } from "lodash";
 import { UnaryFunction } from "rxjs";
-import { createFragment } from ".";
 import { Slice, SliceAdapter, SliceProvider } from "./slice";
 
 export class App<
@@ -26,11 +26,7 @@ export class App<
     this.render = () => render(mapValues(this.slices, property("render")));
   }
 
-  appendTo(node: HTMLElement) {
-    return node.append(
-      createFragment({
-        children: this.render(),
-      }),
-    );
+  renderTo(node: HTMLElement) {
+    return createRoot(node).render(this.render());
   }
 }

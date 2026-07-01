@@ -2,7 +2,7 @@ export { ApiProvider, type ApiEffect } from "./api";
 export { App } from "./app";
 export { createComponent, createStandaloneComponent } from "./component";
 export { registerCustomProperties } from "./dom";
-export { createElement, createFragment } from "./jsx-runtime";
+export { createElement, createFragment, createRoot } from "./jsx-runtime";
 export { Serializable, type BrandedSerializer } from "./serializable";
 export { createSlice } from "./slice";
 export { type StoreEffect } from "./store";

@@ -7,7 +7,7 @@ import {
   MaybeObservableInputTuple,
 } from "@cascateer/lib";
 import { reduce } from "@cascateer/lib/observable";
-import { bind, camelCase, Dictionary, isFunction, isObject } from "lodash";
+import { bind, camelCase, Dictionary, isFunction, isObject, tap } from "lodash";
 import React, { CSSProperties } from "react";
 import {
   combineLatest,
@@ -18,6 +18,7 @@ import {
   UnaryFunction,
 } from "rxjs";
 import { Primitive } from "utility-types";
+import { removeNodes } from "./dom";
 import { ObservableFragment } from "./fragment";
 
 type DocumentEventListener<EventName extends keyof DocumentEventMap> =
@@ -201,6 +202,19 @@ export const createElement = (
     }
   }
 };
+
+export const createRoot = (root: Node) => ({
+  render: (children?: JSX.Children) => (
+    removeNodes(...root.childNodes),
+    tap(root, (root) =>
+      root.appendChild(
+        createFragment({
+          children,
+        }),
+      ),
+    )
+  ),
+});
 
 export const Fragment = createFragment;
 export const jsx = createElement;

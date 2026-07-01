@@ -1,6 +1,22 @@
 import { isObject, memoize } from "lodash";
 import { createFragment } from ".";
 
+export const insertNodes = <T extends Node>(...nodes: T[]) => ({
+  before: (child: Node | null): T[] => {
+    for (const node of nodes) {
+      child?.parentNode?.insertBefore(node, child);
+    }
+
+    return nodes;
+  },
+});
+
+export const removeNodes = <T extends Node>(...nodes: T[]) => {
+  for (const node of nodes) {
+    node.parentNode?.removeChild(node);
+  }
+};
+
 export class CustomElement extends HTMLElement {
   constructor(children?: JSX.Children, styles: CSSStyleSheet[] = []) {
     super();

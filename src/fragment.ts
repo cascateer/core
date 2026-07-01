@@ -15,22 +15,7 @@ import {
   switchMap,
 } from "rxjs";
 import { isPrimitive } from "utility-types";
-
-const insertNodes = <T extends Node>(...nodes: T[]) => ({
-  before: (child: Node | null): T[] => {
-    for (const node of nodes) {
-      child?.parentNode?.insertBefore(node, child);
-    }
-
-    return nodes;
-  },
-});
-
-const removeNodes = <T extends Node>(...nodes: T[]) => {
-  for (const node of nodes) {
-    node.parentNode?.removeChild(node);
-  }
-};
+import { insertNodes, removeNodes } from "./dom";
 
 class AnchorFragment extends DocumentFragment {
   appendAnchor(current?: Comment) {
