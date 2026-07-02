@@ -1,5 +1,5 @@
-import { nonNullable } from "@cascateer/lib";
-import { isObject, isString, once, tap } from "lodash";
+import { keyMapBy, nonNullable, property } from "@cascateer/lib";
+import { isObject, isString, once } from "lodash";
 
 const cssImports = once(() =>
   Promise.all(
@@ -22,22 +22,15 @@ const cssImports = once(() =>
         };
       }),
     ),
-  ).then((imports) =>
-    imports.reduce(
-      (imports, { url, module, styleSheet }) =>
-        tap(imports, ({ urls, styleSheets }) => {
-          urls.set(module, url);
-          styleSheets.set(
-            url,
-            (styleSheets.get(url) ?? []).concat(styleSheet ?? []),
-          );
-        }),
-      {
-        urls: new Map<unknown, string>(),
-        styleSheets: new Map<string, CSSStyleSheet[]>(),
-      },
+  ).then((imports) => ({
+    urls: keyMapBy(imports, property("module"), property("url")),
+    styleSheets: keyMapBy(
+      imports,
+      property("url"),
+      ({ url, styleSheet }, styleSheets): StyleSheet[] =>
+        (styleSheets.get(url) ?? []).concat(styleSheet ?? []),
     ),
-  ),
+  })),
 );
 
 export const cssStyleSheets = (modules: unknown[]) =>
