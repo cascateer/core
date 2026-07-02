@@ -14,7 +14,8 @@
     ".": "./src/index.ts",
     "./jsx-runtime": "./src/jsx-runtime.ts",
     "./jsx-dev-runtime": "./src/jsx-dev-runtime.ts",
-    "./operators": "./src/operators/index.ts"
+    "./operators": "./src/operators/index.ts",
+    "./vite": "./src/vite.ts"
   },
   "devDependencies": {
     "@cascateer/eslint": "^0.0.8",
