@@ -17,16 +17,17 @@
     "./operators": "./src/operators/index.ts"
   },
   "devDependencies": {
-    "@cascateer/eslint": "^0.0.8",
+    "@cascateer/eslint": "^0.0.16",
     "@types/lodash": "^4.17.24",
     "@types/node": "^26.1.0",
     "@types/object-hash": "^3.0.6",
     "@types/react": "^19.2.17",
     "typescript": "~6.0.3",
+    "vite-plugin-sass-dts": "^1.3.37",
     "vitest": "^4.1.9"
   },
   "dependencies": {
-    "@cascateer/lib": "^1.0.58",
+    "@cascateer/lib": "^1.0.60",
     "lodash": "^4.18.1",
     "object-hash": "^3.0.0",
     "rxjs": "^7.8.2",

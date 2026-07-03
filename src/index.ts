@@ -8,3 +8,4 @@ export { createSlice } from "./slice";
 export { type StoreEffect } from "./store";
 export { type TerminalEffect } from "./terminal";
 export { type Action, type Effect } from "./types";
+export { createDevServer } from "./vite";
