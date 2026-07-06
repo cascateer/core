@@ -2,7 +2,7 @@ import {
   asArray,
   asFunction,
   asObservable,
-  ExtendableDictionary,
+  LazyDictionary,
   MaybeArray,
   MaybeFunction,
   MaybeObservable,
@@ -121,11 +121,8 @@ export class ExtendableApiAdapter<
       source: Source;
       invalidatedTags: Subject<string[]>;
     },
-    private extendableEffects: ExtendableDictionary<
-      ApiEffect<any, any>,
-      Effects
-    >,
-    private extendableActions: ExtendableDictionary<Action<any, any>, Actions>,
+    private extendableEffects: LazyDictionary<ApiEffect<any, any>, Effects>,
+    private extendableActions: LazyDictionary<Action<any, any>, Actions>,
   ) {}
 
   provideEffects<MoreEffects extends Dictionary<ApiEffect<any, any>>>(
@@ -178,8 +175,8 @@ export class ApiProvider<Source> extends ExtendableApiAdapter<Source, {}, {}> {
         source,
         invalidatedTags: new Subject(),
       },
-      new ExtendableDictionary({}),
-      new ExtendableDictionary({}),
+      new LazyDictionary({}),
+      new LazyDictionary({}),
     );
   }
 }

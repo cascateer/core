@@ -1,4 +1,4 @@
-import { ExtendableDictionary } from "@cascateer/lib";
+import { LazyDictionary } from "@cascateer/lib";
 import { Dictionary } from "lodash";
 import { UnaryFunction } from "rxjs";
 import { ApiAdapter, ApiEffect } from "./api";
@@ -47,11 +47,11 @@ export class ExtendableTerminalAdapter<
       store: StoreAdapter<StoreSignals, StoreActions>;
       api: ApiAdapter<ApiEffects, ApiActions>;
     },
-    private extendableEffects: ExtendableDictionary<
+    private extendableEffects: LazyDictionary<
       TerminalEffect<any, any>,
       Effects
     >,
-    private extendableActions: ExtendableDictionary<Action<any, any>, Actions>,
+    private extendableActions: LazyDictionary<Action<any, any>, Actions>,
   ) {}
 
   provideEffects<MoreEffects extends Dictionary<TerminalEffect<any, any>>>(
@@ -172,6 +172,6 @@ export class TerminalProvider<
     api: ApiAdapter<ApiEffects, ApiActions>;
     store: StoreAdapter<StoreSignals, StoreActions>;
   }) {
-    super(context, new ExtendableDictionary({}), new ExtendableDictionary({}));
+    super(context, new LazyDictionary({}), new LazyDictionary({}));
   }
 }

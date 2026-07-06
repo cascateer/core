@@ -27,7 +27,7 @@ const cssImports = once(() =>
     styleSheets: keyMapBy(
       imports,
       property("url"),
-      ({ url, styleSheet }, styleSheets): StyleSheet[] =>
+      ({ url, styleSheet }, styleSheets): CSSStyleSheet[] =>
         (styleSheets.get(url) ?? []).concat(styleSheet ?? []),
     ),
   })),

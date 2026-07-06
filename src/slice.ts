@@ -1,4 +1,4 @@
-import { ExtendableDictionary } from "@cascateer/lib";
+import { LazyDictionary } from "@cascateer/lib";
 import { Dictionary, mapValues } from "lodash";
 import { defer, map, share, UnaryFunction } from "rxjs";
 import { createFragment } from ".";
@@ -84,9 +84,9 @@ interface SliceConfigTemplate<
   {
     [K in keyof Components]: ReturnType<
       <
-        Props extends Components[K] extends ComponentConstructor<infer Props>
+        Props extends (Components[K] extends ComponentConstructor<infer Props>
           ? Props
-          : never,
+          : never),
       >() => JSX.Component<Props>
     >;
   },
@@ -295,7 +295,7 @@ export class ExtendableSliceAdapter<
   }
 
   constructor(
-    private extendableSlices: ExtendableDictionary<
+    private extendableSlices: LazyDictionary<
       Slice<any, any, any, any, any, any, any, any>,
       Slices
     >,
@@ -359,6 +359,6 @@ export class ExtendableSliceAdapter<
 
 export class SliceProvider extends ExtendableSliceAdapter<{}> {
   constructor() {
-    super(new ExtendableDictionary({}));
+    super(new LazyDictionary({}));
   }
 }

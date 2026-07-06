@@ -1,4 +1,4 @@
-import { ExtendableDictionary } from "@cascateer/lib";
+import { LazyDictionary } from "@cascateer/lib";
 import { Dictionary, kebabCase } from "lodash";
 import { defer, share, UnaryFunction } from "rxjs";
 import { createFragment } from ".";
@@ -106,7 +106,7 @@ export class ExtendableComponentsAdapter<
       api: ApiAdapter<ApiEffects, ApiActions>;
       terminal: TerminalAdapter<TerminalEffects, TerminalActions>;
     },
-    private extendableComponents: ExtendableDictionary<
+    private extendableComponents: LazyDictionary<
       ComponentConstructor<any>,
       Components
     >,
@@ -187,6 +187,6 @@ export class ComponentsProvider<
     api: ApiAdapter<ApiEffects, ApiActions>;
     terminal: TerminalAdapter<TerminalEffects, TerminalActions>;
   }) {
-    super(context, new ExtendableDictionary({}));
+    super(context, new LazyDictionary({}));
   }
 }

@@ -1,4 +1,4 @@
-import { EndoFunction, ExtendableDictionary } from "@cascateer/lib";
+import { EndoFunction, LazyDictionary } from "@cascateer/lib";
 import { flatMap, reduce } from "@cascateer/lib/observable";
 import { constant, Dictionary, mapValues, noop, tap } from "lodash";
 import {
@@ -27,9 +27,9 @@ export type StoreEffect<Result> = () => Signal<Result>;
 export type StoreEffects<Signals extends Dictionary<ComputedSignal<any>>> = {
   [K in keyof Signals]: ReturnType<
     <
-      Result extends Signals[K] extends ComputedSignal<infer Result>
+      Result extends (Signals[K] extends ComputedSignal<infer Result>
         ? Result
-        : never,
+        : never),
     >() => StoreEffect<Result>
   >;
 };
@@ -73,11 +73,8 @@ export class ExtendableStoreAdapter<
         ) => MulticastAction<any, "transformAction">,
       ) => void;
     },
-    private extendableSignals: ExtendableDictionary<
-      ComputedSignal<any>,
-      Signals
-    >,
-    private extendableActions: ExtendableDictionary<Action<any, any>, Actions>,
+    private extendableSignals: LazyDictionary<ComputedSignal<any>, Signals>,
+    private extendableActions: LazyDictionary<Action<any, any>, Actions>,
   ) {}
 
   provideSignals<MoreSignals extends Dictionary<ComputedSignal<any>>>(
@@ -110,9 +107,9 @@ export class ExtendableStoreAdapter<
             {
               [K in keyof Signals]: {
                 update: <
-                  T extends Signals[K] extends ComputedSignal<infer T>
+                  T extends (Signals[K] extends ComputedSignal<infer T>
                     ? T
-                    : never,
+                    : never),
                 >(
                   predicate: UnaryFunction<Args, EndoFunction<T>>,
                   config?: { sameOrigin?: boolean },
@@ -221,7 +218,7 @@ export class StoreProvider<Data> extends ExtendableStoreAdapter<
             )
             .subscribe(transformActions),
       },
-      new ExtendableDictionary({
+      new LazyDictionary({
         data: new ComputedSignal({
           value: merge(seedActions, transformActions).pipe(
             tapOperator((action) => console.log(action)),
@@ -249,7 +246,7 @@ export class StoreProvider<Data> extends ExtendableStoreAdapter<
           ),
         }),
       }),
-      new ExtendableDictionary({}),
+      new LazyDictionary({}),
     );
   }
 }
