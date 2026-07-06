@@ -291,11 +291,11 @@ export class LazySliceAdapter<
   Slices extends Dictionary<Slice<any, any, any, any, any, any, any, any>>,
 > {
   complete(): SliceAdapter<Slices> {
-    return new SliceAdapter(this.extendableSlices.complete());
+    return new SliceAdapter(this.lazySlices.complete());
   }
 
   constructor(
-    private extendableSlices: LazyDictionary<
+    private lazySlices: LazyDictionary<
       Slice<any, any, any, any, any, any, any, any>,
       Slices
     >,
@@ -346,7 +346,7 @@ export class LazySliceAdapter<
     >,
   ) {
     return new LazySliceAdapter(
-      this.extendableSlices.extend(
+      this.lazySlices.extend(
         () =>
           ({ property }) =>
             slices({

@@ -55,8 +55,8 @@ export class LazyStoreAdapter<
 > {
   complete(): StoreAdapter<Signals, Actions> {
     return new StoreAdapter(
-      this.extendableSignals.complete(),
-      this.extendableActions.complete(),
+      this.lazySignals.complete(),
+      this.lazyActions.complete(),
     );
   }
 
@@ -73,8 +73,8 @@ export class LazyStoreAdapter<
         ) => MulticastAction<any, "transformAction">,
       ) => void;
     },
-    private extendableSignals: LazyDictionary<ComputedSignal<any>, Signals>,
-    private extendableActions: LazyDictionary<Action<any, any>, Actions>,
+    private lazySignals: LazyDictionary<ComputedSignal<any>, Signals>,
+    private lazyActions: LazyDictionary<Action<any, any>, Actions>,
   ) {}
 
   provideSignals<MoreSignals extends Dictionary<ComputedSignal<any>>>(
@@ -89,13 +89,13 @@ export class LazyStoreAdapter<
   ) {
     return new LazyStoreAdapter(
       this.transform,
-      this.extendableSignals.extend(
+      this.lazySignals.extend(
         (currentSignals) => () =>
           signals({
             signal: (constructor) => constructor(currentSignals),
           }),
       ),
-      this.extendableActions,
+      this.lazyActions,
     );
   }
 
@@ -125,53 +125,50 @@ export class LazyStoreAdapter<
   ) {
     return new LazyStoreAdapter(
       this.transform,
-      this.extendableSignals,
-      this.extendableActions.extend(
+      this.lazySignals,
+      this.lazyActions.extend(
         () =>
           ({ property }) =>
             actions({
               action: (constructor) =>
                 property((key) =>
                   constructor(
-                    mapValues(
-                      this.extendableSignals.currentValue,
-                      (signal) => ({
-                        update: (predicate, config = {}) => {
-                          const callbacks = new Map<
-                            string,
-                            UnaryFunction<unknown, void>
-                          >();
+                    mapValues(this.lazySignals.currentValue, (signal) => ({
+                      update: (predicate, config = {}) => {
+                        const callbacks = new Map<
+                          string,
+                          UnaryFunction<unknown, void>
+                        >();
 
-                          this.transform.parse(key, (event) => ({
-                            ...event,
-                            predicate: signal.pull(
-                              predicate(
-                                Serializable.parse(event.data.args ?? null),
+                        this.transform.parse(key, (event) => ({
+                          ...event,
+                          predicate: signal.pull(
+                            predicate(
+                              Serializable.parse(event.data.args ?? null),
+                            ),
+                          ),
+                          callback: callbacks.get(event.id),
+                        }));
+
+                        return (args) =>
+                          new Promise<unknown>((callback) =>
+                            this.transform.share(
+                              async ({ id }) => (
+                                callbacks.set(id, callback),
+                                {
+                                  id,
+                                  type: "transformAction",
+                                  data: {
+                                    key: await key,
+                                    args: JSON.stringify(args),
+                                  },
+                                  sameOrigin: config.sameOrigin,
+                                }
                               ),
                             ),
-                            callback: callbacks.get(event.id),
-                          }));
-
-                          return (args) =>
-                            new Promise<unknown>((callback) =>
-                              this.transform.share(
-                                async ({ id }) => (
-                                  callbacks.set(id, callback),
-                                  {
-                                    id,
-                                    type: "transformAction",
-                                    data: {
-                                      key: await key,
-                                      args: JSON.stringify(args),
-                                    },
-                                    sameOrigin: config.sameOrigin,
-                                  }
-                                ),
-                              ),
-                            );
-                        },
-                      }),
-                    ),
+                          );
+                      },
+                    })),
                   ),
                 ),
             }),

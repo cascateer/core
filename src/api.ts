@@ -111,8 +111,8 @@ export class LazyApiAdapter<
 > {
   complete(): ApiAdapter<Effects, Actions> {
     return new ApiAdapter(
-      this.extendableEffects.complete(),
-      this.extendableActions.complete(),
+      this.lazyEffects.complete(),
+      this.lazyActions.complete(),
     );
   }
 
@@ -121,8 +121,8 @@ export class LazyApiAdapter<
       source: Source;
       invalidatedTags: Subject<string[]>;
     },
-    private extendableEffects: LazyDictionary<ApiEffect<any, any>, Effects>,
-    private extendableActions: LazyDictionary<Action<any, any>, Actions>,
+    private lazyEffects: LazyDictionary<ApiEffect<any, any>, Effects>,
+    private lazyActions: LazyDictionary<Action<any, any>, Actions>,
   ) {}
 
   provideEffects<MoreEffects extends Dictionary<ApiEffect<any, any>>>(
@@ -133,7 +133,7 @@ export class LazyApiAdapter<
   ) {
     return new LazyApiAdapter(
       this.context,
-      this.extendableEffects.extend(
+      this.lazyEffects.extend(
         () => () =>
           effects({
             effect: (config) =>
@@ -142,7 +142,7 @@ export class LazyApiAdapter<
               ),
           }),
       ),
-      this.extendableActions,
+      this.lazyActions,
     );
   }
 
@@ -154,8 +154,8 @@ export class LazyApiAdapter<
   ) {
     return new LazyApiAdapter(
       this.context,
-      this.extendableEffects,
-      this.extendableActions.extend(
+      this.lazyEffects,
+      this.lazyActions.extend(
         () => () =>
           actions({
             action: (config) =>

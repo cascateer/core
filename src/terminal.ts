@@ -37,8 +37,8 @@ export class LazyTerminalAdapter<
 > {
   complete(): TerminalAdapter<Effects, Actions> {
     return new TerminalAdapter(
-      this.extendableEffects.complete(),
-      this.extendableActions.complete(),
+      this.lazyEffects.complete(),
+      this.lazyActions.complete(),
     );
   }
 
@@ -47,11 +47,8 @@ export class LazyTerminalAdapter<
       store: StoreAdapter<StoreSignals, StoreActions>;
       api: ApiAdapter<ApiEffects, ApiActions>;
     },
-    private extendableEffects: LazyDictionary<
-      TerminalEffect<any, any>,
-      Effects
-    >,
-    private extendableActions: LazyDictionary<Action<any, any>, Actions>,
+    private lazyEffects: LazyDictionary<TerminalEffect<any, any>, Effects>,
+    private lazyActions: LazyDictionary<Action<any, any>, Actions>,
   ) {}
 
   provideEffects<MoreEffects extends Dictionary<TerminalEffect<any, any>>>(
@@ -79,7 +76,7 @@ export class LazyTerminalAdapter<
   ) {
     return new LazyTerminalAdapter(
       this.context,
-      this.extendableEffects.extend(
+      this.lazyEffects.extend(
         (currentEffects) => () =>
           effects({
             effect: (constructor) => {
@@ -100,7 +97,7 @@ export class LazyTerminalAdapter<
             },
           }),
       ),
-      this.extendableActions,
+      this.lazyActions,
     );
   }
 
@@ -131,8 +128,8 @@ export class LazyTerminalAdapter<
   ) {
     return new LazyTerminalAdapter(
       this.context,
-      this.extendableEffects,
-      this.extendableActions.extend(
+      this.lazyEffects,
+      this.lazyActions.extend(
         (currentActions) => () =>
           actions({
             action: (constructor) =>
@@ -145,7 +142,7 @@ export class LazyTerminalAdapter<
                   actions: this.context.api.actions,
                 },
                 terminal: {
-                  effects: this.extendableEffects.currentValue,
+                  effects: this.lazyEffects.currentValue,
                   actions: currentActions,
                 },
               }),

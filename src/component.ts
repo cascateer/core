@@ -97,7 +97,7 @@ export class LazyComponentsAdapter<
   Components extends Dictionary<ComponentConstructor<any>>,
 > {
   complete(): ComponentsAdapter<Components> {
-    return new ComponentsAdapter(this.extendableComponents.complete());
+    return new ComponentsAdapter(this.lazyComponents.complete());
   }
 
   constructor(
@@ -106,7 +106,7 @@ export class LazyComponentsAdapter<
       api: ApiAdapter<ApiEffects, ApiActions>;
       terminal: TerminalAdapter<TerminalEffects, TerminalActions>;
     },
-    private extendableComponents: LazyDictionary<
+    private lazyComponents: LazyDictionary<
       ComponentConstructor<any>,
       Components
     >,
@@ -142,7 +142,7 @@ export class LazyComponentsAdapter<
   ) {
     return new LazyComponentsAdapter(
       this.context,
-      this.extendableComponents.extend(
+      this.lazyComponents.extend(
         () => () =>
           components({
             component: (constructor) =>
