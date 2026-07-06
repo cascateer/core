@@ -104,7 +104,7 @@ export class ApiAdapter<
   ) {}
 }
 
-export class ExtendableApiAdapter<
+export class LazyApiAdapter<
   Source,
   Effects extends Dictionary<ApiEffect<any, any>>,
   Actions extends Dictionary<Action<any, any>>,
@@ -131,7 +131,7 @@ export class ExtendableApiAdapter<
       MoreEffects
     >,
   ) {
-    return new ExtendableApiAdapter(
+    return new LazyApiAdapter(
       this.context,
       this.extendableEffects.extend(
         () => () =>
@@ -152,7 +152,7 @@ export class ExtendableApiAdapter<
       MoreActions
     >,
   ) {
-    return new ExtendableApiAdapter(
+    return new LazyApiAdapter(
       this.context,
       this.extendableEffects,
       this.extendableActions.extend(
@@ -168,7 +168,7 @@ export class ExtendableApiAdapter<
   }
 }
 
-export class ApiProvider<Source> extends ExtendableApiAdapter<Source, {}, {}> {
+export class ApiProvider<Source> extends LazyApiAdapter<Source, {}, {}> {
   constructor(source: Source) {
     super(
       {

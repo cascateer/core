@@ -87,7 +87,7 @@ export class ComponentsAdapter<
   constructor(public components: Components) {}
 }
 
-export class ExtendableComponentsAdapter<
+export class LazyComponentsAdapter<
   StoreSignals extends Dictionary<ComputedSignal<any>>,
   StoreActions extends Dictionary<Action<any, any>>,
   ApiEffects extends Dictionary<ApiEffect<any, any>>,
@@ -140,7 +140,7 @@ export class ExtendableComponentsAdapter<
       MoreComponents
     >,
   ) {
-    return new ExtendableComponentsAdapter(
+    return new LazyComponentsAdapter(
       this.context,
       this.extendableComponents.extend(
         () => () =>
@@ -173,7 +173,7 @@ export class ComponentsProvider<
   ApiActions extends Dictionary<Action<any, any>>,
   TerminalEffects extends Dictionary<TerminalEffect<any, any>>,
   TerminalActions extends Dictionary<Action<any, any>>,
-> extends ExtendableComponentsAdapter<
+> extends LazyComponentsAdapter<
   StoreSignals,
   StoreActions,
   ApiEffects,

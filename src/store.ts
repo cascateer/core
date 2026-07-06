@@ -49,7 +49,7 @@ export class StoreAdapter<
   ) {}
 }
 
-export class ExtendableStoreAdapter<
+export class LazyStoreAdapter<
   Signals extends Dictionary<ComputedSignal<any>>,
   Actions extends Dictionary<Action<any, any>>,
 > {
@@ -87,7 +87,7 @@ export class ExtendableStoreAdapter<
       MoreSignals
     >,
   ) {
-    return new ExtendableStoreAdapter(
+    return new LazyStoreAdapter(
       this.transform,
       this.extendableSignals.extend(
         (currentSignals) => () =>
@@ -123,7 +123,7 @@ export class ExtendableStoreAdapter<
       MoreActions
     >,
   ) {
-    return new ExtendableStoreAdapter(
+    return new LazyStoreAdapter(
       this.transform,
       this.extendableSignals,
       this.extendableActions.extend(
@@ -180,7 +180,7 @@ export class ExtendableStoreAdapter<
   }
 }
 
-export class StoreProvider<Data> extends ExtendableStoreAdapter<
+export class StoreProvider<Data> extends LazyStoreAdapter<
   { data: ComputedSignal<Data> },
   {}
 > {

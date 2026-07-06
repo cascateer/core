@@ -287,7 +287,7 @@ export class SliceAdapter<
   constructor(public slices: Slices) {}
 }
 
-export class ExtendableSliceAdapter<
+export class LazySliceAdapter<
   Slices extends Dictionary<Slice<any, any, any, any, any, any, any, any>>,
 > {
   complete(): SliceAdapter<Slices> {
@@ -345,7 +345,7 @@ export class ExtendableSliceAdapter<
       MoreSlices
     >,
   ) {
-    return new ExtendableSliceAdapter(
+    return new LazySliceAdapter(
       this.extendableSlices.extend(
         () =>
           ({ property }) =>
@@ -357,7 +357,7 @@ export class ExtendableSliceAdapter<
   }
 }
 
-export class SliceProvider extends ExtendableSliceAdapter<{}> {
+export class SliceProvider extends LazySliceAdapter<{}> {
   constructor() {
     super(new LazyDictionary({}));
   }

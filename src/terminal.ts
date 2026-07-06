@@ -27,7 +27,7 @@ export class TerminalAdapter<
   ) {}
 }
 
-export class ExtendableTerminalAdapter<
+export class LazyTerminalAdapter<
   StoreSignals extends Dictionary<ComputedSignal<any>>,
   StoreActions extends Dictionary<Action<any, any>>,
   ApiEffects extends Dictionary<ApiEffect<any, any>>,
@@ -77,7 +77,7 @@ export class ExtendableTerminalAdapter<
       MoreEffects
     >,
   ) {
-    return new ExtendableTerminalAdapter(
+    return new LazyTerminalAdapter(
       this.context,
       this.extendableEffects.extend(
         (currentEffects) => () =>
@@ -129,7 +129,7 @@ export class ExtendableTerminalAdapter<
       MoreActions
     >,
   ) {
-    return new ExtendableTerminalAdapter(
+    return new LazyTerminalAdapter(
       this.context,
       this.extendableEffects,
       this.extendableActions.extend(
@@ -160,7 +160,7 @@ export class TerminalProvider<
   StoreActions extends Dictionary<Action<any, any>>,
   ApiEffects extends Dictionary<ApiEffect<any, any>>,
   ApiActions extends Dictionary<Action<any, any>>,
-> extends ExtendableTerminalAdapter<
+> extends LazyTerminalAdapter<
   StoreSignals,
   StoreActions,
   ApiEffects,
