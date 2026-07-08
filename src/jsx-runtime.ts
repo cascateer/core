@@ -37,10 +37,12 @@ declare global {
 
     type IntrinsicElements = {
       [TagName in keyof HTMLElementTagNameMap]: IntrinsicAttributes & {
-        [AttributeName in keyof Omit<
-          React.JSX.IntrinsicElements[TagName],
-          "children" | "dangerouslySetInnerHTML" | "ref"
-        >]: AttributeName extends `on${infer ReactEventName}`
+        [
+          AttributeName in keyof Omit<
+            React.JSX.IntrinsicElements[TagName],
+            "children" | "dangerouslySetInnerHTML" | "ref"
+          >
+        ]: AttributeName extends `on${infer ReactEventName}`
           ? Lowercase<ReactEventName> extends keyof DocumentEventMap
             ? DocumentEventListener<Lowercase<ReactEventName>>
             : never
@@ -146,7 +148,7 @@ export const createElement = (
                     source: Dictionary<unknown>,
                   ) => {
                     for (const [name, value] of Object.entries(source)) {
-                      target.setProperty(name, String(value));
+                      target.setProperty(camelCase(name), String(value));
                     }
 
                     return source;
