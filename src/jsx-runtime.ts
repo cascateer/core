@@ -7,7 +7,15 @@ import {
   MaybeObservableInputTuple,
 } from "@cascateer/lib";
 import { reduce } from "@cascateer/lib/observable";
-import { bind, camelCase, Dictionary, isFunction, isObject, tap } from "lodash";
+import {
+  bind,
+  camelCase,
+  Dictionary,
+  isFunction,
+  isObject,
+  kebabCase,
+  tap,
+} from "lodash";
 import React, { CSSProperties } from "react";
 import {
   combineLatest,
@@ -148,7 +156,7 @@ export const createElement = (
                     source: Dictionary<unknown>,
                   ) => {
                     for (const [name, value] of Object.entries(source)) {
-                      target.setProperty(camelCase(name), String(value));
+                      target.setProperty(kebabCase(name), String(value));
                     }
 
                     return source;
