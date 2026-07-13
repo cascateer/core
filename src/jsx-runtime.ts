@@ -198,6 +198,12 @@ export const createElement = (
                 }
               } else if (name === "disabled" && !propertyValue) {
                 element.removeAttribute(name);
+              } else if (
+                name === "checked" &&
+                element instanceof HTMLInputElement &&
+                element.type === "checkbox"
+              ) {
+                element.checked = Boolean(propertyValue);
               } else {
                 element.setAttribute(name, String(propertyValue));
               }
