@@ -7,14 +7,7 @@ import {
   MaybeFunction,
   MaybeObservable,
 } from "@cascateer/lib";
-import {
-  Dictionary,
-  flow,
-  Function1,
-  Function2,
-  intersectionWith,
-  isEqual,
-} from "lodash";
+import { Dictionary, flow, Function1, Function2, intersection } from "lodash";
 import {
   combineLatest,
   filter,
@@ -90,8 +83,9 @@ class Memoizable<Args, Result> {
                     ),
                     invalidatedTags,
                   ]).pipe(
-                    filter(([tags, invalidatedTags]) =>
-                      isEqual(tags, intersectionWith(tags, invalidatedTags)),
+                    filter(
+                      ([tags, invalidatedTags]) =>
+                        intersection(tags, invalidatedTags).length > 0,
                     ),
                   ),
               }),
