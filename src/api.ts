@@ -32,22 +32,42 @@ import { memoize } from "./lib/memoize";
 import { ProxyObservable } from "./observable";
 import { Action, ProxyEffect } from "./types";
 
+type MemoizableTagsFactory<Args, Result> = MaybeFunction<
+  [Args, Result],
+  MaybeArray<string>
+>;
+
+class MemoizableTags<Args, Result> {
+  predicate: Function2<Args, Result, string[]>;
+
+  constructor(factory?: MemoizableTagsFactory<Args, Result>) {
+    this.predicate = flow(asFunction(factory ?? []), asArray);
+  }
+}
+
 interface MemoizableConfig<Args, Result> {
   predicate: Function1<Args, MaybeObservable<Result>>;
-  tags?: MaybeFunction<[Args, Result], MaybeArray<string>>;
+  tags?: MemoizableTagsFactory<Args, Result>;
+  invalidatesTags?: MemoizableTagsFactory<Args, Result>;
 }
 
 class Memoizable<Args, Result> {
   predicate: Function1<Args, Observable<Result>>;
-  tags: Function2<Args, Result, string[]>;
+  tags: MemoizableTags<Args, Result>;
+  invalidatesTags: MemoizableTags<Args, Result>;
 
-  subscribe: Function1<Observable<string[]>, ProxyEffect<Args, Result>>;
+  subscribe: Function1<Subject<string[]>, ProxyEffect<Args, Result>>;
 
   share: Function1<NextObserver<string[]>, Action<Args, Result>>;
 
-  constructor({ predicate, tags }: MemoizableConfig<Args, Result>) {
+  constructor({
+    predicate,
+    tags,
+    invalidatesTags,
+  }: MemoizableConfig<Args, Result>) {
     this.predicate = (args) => asObservable(predicate(args));
-    this.tags = flow(asFunction(tags ?? []), asArray);
+    this.tags = new MemoizableTags(tags);
+    this.invalidatesTags = new MemoizableTags(invalidatesTags);
 
     this.subscribe = (invalidatedTags) => {
       const memoizedEffect: ProxyEffect<Args, Result> = memoize(
@@ -55,6 +75,10 @@ class Memoizable<Args, Result> {
           new ProxyObservable((pending) =>
             this.predicate(args).pipe(
               tap({
+                next: (result) =>
+                  invalidatedTags.next(
+                    this.invalidatesTags.predicate(args, result),
+                  ),
                 subscribe: () => pending.next(true),
               }),
               finalize(() => pending.next(false)),
@@ -62,7 +86,7 @@ class Memoizable<Args, Result> {
                 delay: () =>
                   combineLatest([
                     memoizedEffect(args).pipe(
-                      map((result) => this.tags(args, result)),
+                      map((result) => this.tags.predicate(args, result)),
                     ),
                     invalidatedTags,
                   ]).pipe(
@@ -81,18 +105,23 @@ class Memoizable<Args, Result> {
 
     this.share = (invalidatedTags) => (args) =>
       lastValueFrom(this.predicate(args)).then(
-        (result) => (invalidatedTags.next(this.tags(args, result)), result),
+        (result) => (
+          invalidatedTags.next(this.invalidatesTags.predicate(args, result)),
+          result
+        ),
       );
   }
 }
 
 export interface ApiEffect<Args, Result> extends ProxyEffect<Args, Result> {}
 
-type ApiAdapterPropertyConstructor<Source, Type extends "effect" | "action"> = {
-  [T in Type]: <Args, Result>(
-    config: Function1<Source, MemoizableConfig<Args, Result>>,
-  ) => T extends "effect" ? ApiEffect<Args, Result> : Action<Args, Result>;
-}[Type];
+type ApiAdapterEffectConstructor<Source> = <Args, Result>(
+  config: Function1<Source, MemoizableConfig<Args, Result>>,
+) => ApiEffect<Args, Result>;
+
+type ApiAdapterActionConstructor<Source> = <Args, Result>(
+  config: Function1<Source, Omit<MemoizableConfig<Args, Result>, "tags">>,
+) => Action<Args, Result>;
 
 export class ApiAdapter<
   Effects extends Dictionary<ApiEffect<any, any>>,
@@ -127,7 +156,7 @@ export class LazyApiAdapter<
 
   provideEffects<MoreEffects extends Dictionary<ApiEffect<any, any>>>(
     effects: Function1<
-      { effect: ApiAdapterPropertyConstructor<Source, "effect"> },
+      { effect: ApiAdapterEffectConstructor<Source> },
       MoreEffects
     >,
   ) {
@@ -148,7 +177,7 @@ export class LazyApiAdapter<
 
   provideActions<MoreActions extends Dictionary<Action<any, any>>>(
     actions: Function1<
-      { action: ApiAdapterPropertyConstructor<Source, "action"> },
+      { action: ApiAdapterActionConstructor<Source> },
       MoreActions
     >,
   ) {
