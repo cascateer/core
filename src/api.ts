@@ -27,14 +27,16 @@ import { Action, ProxyEffect } from "./types";
 
 type MemoizableTagsFactory<Args, Result> = MaybeFunction<
   [Args, Result],
-  MaybeArray<string>
+  MaybeArray<string> | undefined
 >;
 
 class MemoizableTags<Args, Result> {
   predicate: Function2<Args, Result, string[]>;
 
   constructor(factory?: MemoizableTagsFactory<Args, Result>) {
-    this.predicate = flow(asFunction(factory ?? []), asArray);
+    this.predicate = flow(asFunction(factory ?? []), (tags) =>
+      asArray(tags ?? []),
+    );
   }
 }
 
