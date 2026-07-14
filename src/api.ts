@@ -58,7 +58,7 @@ class Memoizable<Args, Result> {
     predicate,
     tags,
     invalidatesTags,
-    persist,
+    persist = true,
   }: MemoizableConfig<Args, Result>) {
     this.predicate = (args) => asObservable(predicate(args));
     this.tags = new MemoizableTags(tags);
@@ -116,7 +116,10 @@ type ApiAdapterEffectConstructor<Source> = <Args, Result>(
 ) => ApiEffect<Args, Result>;
 
 type ApiAdapterActionConstructor<Source> = <Args, Result>(
-  config: Function1<Source, Omit<MemoizableConfig<Args, Result>, "tags">>,
+  config: Function1<
+    Source,
+    Omit<MemoizableConfig<Args, Result>, "tags" | "persist">
+  >,
 ) => Action<Args, Result>;
 
 export class ApiAdapter<
