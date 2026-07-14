@@ -33,10 +33,8 @@ type MemoizableTagsFactory<Args, Result> = MaybeFunction<
 class MemoizableTags<Args, Result> {
   predicate: Function2<Args, Result, string[]>;
 
-  constructor(factory?: MemoizableTagsFactory<Args, Result>) {
-    this.predicate = flow(asFunction(factory ?? []), (tags) =>
-      asArray(tags ?? []),
-    );
+  constructor(factory: MemoizableTagsFactory<Args, Result> = []) {
+    this.predicate = flow(asFunction(factory), (tags = []) => asArray(tags));
   }
 }
 
@@ -51,7 +49,10 @@ class Memoizable<Args, Result> {
   tags: MemoizableTags<Args, Result>;
   invalidatesTags: MemoizableTags<Args, Result>;
 
-  subscribe: Function1<Subject<string[]>, ProxyEffect<Args, Result>>;
+  subscribe: (
+    invalidatedTags: Subject<string[]>,
+    config?: { persist?: boolean },
+  ) => ProxyEffect<Args, Result>;
 
   share: Function1<NextObserver<string[]>, Action<Args, Result>>;
 
@@ -64,7 +65,7 @@ class Memoizable<Args, Result> {
     this.tags = new MemoizableTags(tags);
     this.invalidatesTags = new MemoizableTags(invalidatesTags);
 
-    this.subscribe = (invalidatedTags) => {
+    this.subscribe = (invalidatedTags, { persist = true } = {}) => {
       const memoizedEffect: ProxyEffect<Args, Result> = memoize(
         (args) =>
           new ProxyObservable((pending) =>
@@ -91,7 +92,7 @@ class Memoizable<Args, Result> {
                     ),
                   ),
               }),
-              shareReplay({ bufferSize: 1, refCount: false }),
+              shareReplay({ bufferSize: 1, refCount: !persist }),
             ),
           ),
       );
