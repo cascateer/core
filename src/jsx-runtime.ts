@@ -212,7 +212,9 @@ export const createElement = (
         }
       }
 
-      element.append(createFragment({ children }));
+      if (!(element instanceof HTMLInputElement)) {
+        element.append(createFragment({ children }));
+      }
 
       return element;
     }
