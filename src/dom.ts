@@ -4,16 +4,6 @@ import { createFragment } from ".";
 export const insertNodes = <T extends Node>(...nodes: T[]) => ({
   before: (child: Node | null): T[] => {
     for (const node of nodes) {
-      console.log(
-        "inserting",
-        node,
-        "of",
-        nodes,
-        "before",
-        child,
-        "of parent",
-        child?.parentNode,
-      );
       child?.parentNode?.insertBefore(node, child);
     }
 
