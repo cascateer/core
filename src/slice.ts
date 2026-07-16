@@ -235,7 +235,7 @@ class SliceConfig<
   }
 }
 
-export const createSlice = (key: Promise<string>) => () => ({
+export const createSlice = (key: string) => ({
   withData: <Data>(data: Data) => ({
     withStore: <
       StoreSignals extends Dictionary<ComputedSignal<any>>,
@@ -288,7 +288,7 @@ export const createSlice = (key: Promise<string>) => () => ({
               Components
             > =>
               new SliceConfig({
-                key,
+                key: Promise.resolve(key),
                 data,
                 store,
                 api,
