@@ -99,7 +99,7 @@ interface SliceConfigTemplate<
   JSX.Element
 > {}
 
-interface SliceConfig<
+interface SliceConfigProps<
   Data,
   StoreSignals extends Dictionary<ComputedSignal<any>>,
   StoreActions extends Dictionary<Action<any, any>>,
@@ -109,6 +109,7 @@ interface SliceConfig<
   TerminalActions extends Dictionary<Action<any, any>>,
   Components extends Dictionary<ComponentConstructor<any>>,
 > {
+  key: Promise<string>;
   data: Data;
   store: SliceConfigStore<Data, StoreSignals, StoreActions>;
   api: SliceConfigApi<ApiEffects, ApiActions>;
@@ -132,7 +133,109 @@ interface SliceConfig<
   template: SliceConfigTemplate<Components>;
 }
 
-export const createSlice = () => ({
+class SliceConfig<
+  Data,
+  StoreSignals extends Dictionary<ComputedSignal<any>>,
+  StoreActions extends Dictionary<Action<any, any>>,
+  ApiEffects extends Dictionary<ApiEffect<any, any>>,
+  ApiActions extends Dictionary<Action<any, any>>,
+  TerminalEffects extends Dictionary<TerminalEffect<any, any>>,
+  TerminalActions extends Dictionary<Action<any, any>>,
+  Components extends Dictionary<ComponentConstructor<any>>,
+> {
+  slice: Slice<
+    Data,
+    StoreSignals,
+    StoreActions,
+    ApiEffects,
+    ApiActions,
+    TerminalEffects,
+    TerminalActions,
+    Components
+  >;
+
+  constructor(
+    config: SliceConfigProps<
+      Data,
+      StoreSignals,
+      StoreActions,
+      ApiEffects,
+      ApiActions,
+      TerminalEffects,
+      TerminalActions,
+      Components
+    >,
+  ) {
+    this.slice = new Slice(config);
+  }
+
+  createComponent(customElement?: string) {
+    const withTemplate =
+      <Styles extends Promise<unknown>[]>(...styles: Styles) =>
+      <Props extends JSX.Props>(
+        constructor: (
+          ctx: {
+            store: {
+              effects: StoreEffects<StoreSignals>;
+              actions: StoreActions;
+            };
+            api: {
+              effects: ApiEffects;
+              actions: ApiActions;
+            };
+            terminal: {
+              effects: TerminalEffects;
+              actions: TerminalActions;
+            };
+          },
+          ...classNames: { -readonly [K in keyof Styles]: Awaited<Styles[K]> }
+        ) => JSX.Component<Props>,
+      ) =>
+      (props: Props) =>
+        createFragment({
+          children: defer(() =>
+            Promise.all(styles).then((cssModules) =>
+              cssStyleSheets(cssModules).then(async (cssStyleSheets) => {
+                const element = constructor(
+                  {
+                    store: {
+                      effects: asStoreEffects(this.slice.store.signals),
+                      actions: this.slice.store.actions,
+                    },
+                    api: {
+                      effects: this.slice.api.effects,
+                      actions: this.slice.api.actions,
+                    },
+                    terminal: {
+                      effects: this.slice.terminal.effects,
+                      actions: this.slice.terminal.actions,
+                    },
+                  },
+                  ...cssModules,
+                )(props);
+
+                return customElement != null
+                  ? new (defineCustomElement(
+                      `${await this.slice.key}-${kebabCase(customElement)}`,
+                    ))(element, cssStyleSheets)
+                  : createFragment({
+                      children: element,
+                    }); /* TODO omit cssModules (whole workflow) */
+              }),
+            ),
+          ).pipe(share()),
+        });
+
+    return {
+      withStyles: <Styles extends Promise<unknown>[]>(...styles: Styles) => ({
+        withTemplate: withTemplate(...styles),
+      }),
+      withTemplate: withTemplate(),
+    };
+  }
+}
+
+export const createSlice = (key: Promise<string>) => () => ({
   withData: <Data>(data: Data) => ({
     withStore: <
       StoreSignals extends Dictionary<ComputedSignal<any>>,
@@ -183,7 +286,16 @@ export const createSlice = () => ({
               TerminalEffects,
               TerminalActions,
               Components
-            > => ({ data, store, api, terminal, components, template }),
+            > =>
+              new SliceConfig({
+                key,
+                data,
+                store,
+                api,
+                terminal,
+                components,
+                template,
+              }),
           }),
         }),
       }),
@@ -201,33 +313,35 @@ export class Slice<
   TerminalActions extends Dictionary<Action<any, any>>,
   Components extends Dictionary<ComponentConstructor<any>>,
 > {
-  private store: StoreAdapter<StoreSignals, StoreActions>;
-  private api: SliceConfigApi<ApiEffects, ApiActions>;
-  private terminal: TerminalAdapter<TerminalEffects, TerminalActions>;
+  public key: Promise<string>;
+  public data: Data;
+  public store: StoreAdapter<StoreSignals, StoreActions>;
+  public api: SliceConfigApi<ApiEffects, ApiActions>;
+  public terminal: TerminalAdapter<TerminalEffects, TerminalActions>;
 
   actions: MulticastSubject;
   render: () => JSX.Element;
 
-  constructor(
-    public key: Promise<string>,
-    {
-      data,
-      store,
-      api,
-      terminal,
-      components,
-      template,
-    }: SliceConfig<
-      Data,
-      StoreSignals,
-      StoreActions,
-      ApiEffects,
-      ApiActions,
-      TerminalEffects,
-      TerminalActions,
-      Components
-    >,
-  ) {
+  constructor({
+    key,
+    data,
+    store,
+    api,
+    terminal,
+    components,
+    template,
+  }: SliceConfigProps<
+    Data,
+    StoreSignals,
+    StoreActions,
+    ApiEffects,
+    ApiActions,
+    TerminalEffects,
+    TerminalActions,
+    Components
+  >) {
+    this.key = key;
+    this.data = data;
     this.store = store({
       StoreProvider: ((context) =>
         class extends StoreProvider<Data> {
@@ -288,71 +402,6 @@ export class Slice<
         ),
       });
   }
-
-  createComponent(customElement?: string) {
-    const withTemplate =
-      <Styles extends Promise<unknown>[]>(...styles: Styles) =>
-      <Props extends JSX.Props>(
-        constructor: (
-          ctx: {
-            store: {
-              effects: StoreEffects<StoreSignals>;
-              actions: StoreActions;
-            };
-            api: {
-              effects: ApiEffects;
-              actions: ApiActions;
-            };
-            terminal: {
-              effects: TerminalEffects;
-              actions: TerminalActions;
-            };
-          },
-          ...classNames: { -readonly [K in keyof Styles]: Awaited<Styles[K]> }
-        ) => JSX.Component<Props>,
-      ) =>
-      (props: Props) =>
-        createFragment({
-          children: defer(() =>
-            Promise.all(styles).then((cssModules) =>
-              cssStyleSheets(cssModules).then(async (cssStyleSheets) => {
-                const element = constructor(
-                  {
-                    store: {
-                      effects: asStoreEffects(this.store.signals),
-                      actions: this.store.actions,
-                    },
-                    api: {
-                      effects: this.api.effects,
-                      actions: this.api.actions,
-                    },
-                    terminal: {
-                      effects: this.terminal.effects,
-                      actions: this.terminal.actions,
-                    },
-                  },
-                  ...cssModules,
-                )(props);
-
-                return customElement != null
-                  ? new (defineCustomElement(
-                      `${await this.key}-${kebabCase(customElement)}`,
-                    ))(element, cssStyleSheets)
-                  : createFragment({
-                      children: element,
-                    }); /* TODO omit cssModules (whole workflow) */
-              }),
-            ),
-          ).pipe(share()),
-        });
-
-    return {
-      withStyles: <Styles extends Promise<unknown>[]>(...styles: Styles) => ({
-        withTemplate: withTemplate(...styles),
-      }),
-      withTemplate: withTemplate(),
-    };
-  }
 }
 
 export class SliceAdapter<
@@ -394,7 +443,7 @@ export class LazySliceAdapter<
         >(
           constructor: UnaryFunction<
             void,
-            SliceConfig<
+            SliceConfigProps<
               Data,
               StoreSignals,
               StoreActions,
@@ -424,7 +473,7 @@ export class LazySliceAdapter<
         () =>
           ({ property }) =>
             slices({
-              slice: (config) => property((key) => new Slice(key, config())),
+              slice: (config) => property(() => new Slice(config())),
             }),
       ),
     );
