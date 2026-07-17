@@ -5,80 +5,107 @@ import { createFragment } from ".";
 import { ApiAdapter, ApiEffect } from "./api";
 import { cssStyleSheets } from "./css";
 import { defineCustomElement } from "./dom";
+import { ObservableFragment } from "./fragment";
 import { ComputedSignal } from "./signal";
 import { asStoreEffects, StoreAdapter, StoreEffects } from "./store";
 import { TerminalAdapter, TerminalEffect } from "./terminal";
-import { Action, Effect } from "./types";
+import { Action } from "./types";
 
 export class ComponentConstructor<Props extends JSX.Props> {
   constructor(public predicate: UnaryFunction<string, JSX.Component<Props>>) {}
 }
 
-export function createComponent(customElement?: string) {
-  const withTemplate =
-    <Styles extends Promise<unknown>[]>(...styles: Styles) =>
-    <
-      Context extends Dictionary<Effect<any, any> | Action<any, any>>,
-      Props extends JSX.Props,
-    >(
+export function createComponent(key: Promise<string>): (
+  customElement?: string,
+) => {
+  withStyles: <Styles extends Promise<unknown>[]>(
+    ...styles: Styles
+  ) => {
+    withTemplate: <Props extends JSX.Props>(
+      constructor: (
+        ...classNames: { -readonly [K in keyof Styles]: Awaited<Styles[K]> }
+      ) => JSX.Component<Props>,
+    ) => (props: Props) => ObservableFragment;
+  };
+  withTemplate: <Props extends JSX.Props>(
+    constructor: () => JSX.Component<Props>,
+  ) => (props: Props) => ObservableFragment;
+};
+export function createComponent<Context>(
+  key: Promise<string>,
+  ctx: Context,
+): (customElement?: string) => {
+  withStyles: <Styles extends Promise<unknown>[]>(
+    ...styles: Styles
+  ) => {
+    withTemplate: <Props extends JSX.Props>(
       constructor: (
         ctx: Context,
         ...classNames: { -readonly [K in keyof Styles]: Awaited<Styles[K]> }
       ) => JSX.Component<Props>,
-    ) =>
-      class extends ComponentConstructor<Props> {
-        constructor(ctx: Context) {
-          super(
-            (key) => (props) =>
-              createFragment({
-                children: defer(() =>
-                  Promise.all(styles).then((cssModules) =>
-                    cssStyleSheets(cssModules).then((cssStyleSheets) => {
-                      const element = constructor(ctx, ...cssModules)(props);
+    ) => (props: Props) => ObservableFragment;
+  };
+  withTemplate: <Props extends JSX.Props>(
+    constructor: (ctx: Context) => JSX.Component<Props>,
+  ) => (props: Props) => ObservableFragment;
+};
+export function createComponent<Context>(
+  key: Promise<string>,
+  ctx?: Context,
+): (customElement?: string) => {
+  withStyles: <Styles extends Promise<unknown>[]>(
+    ...styles: Styles
+  ) => {
+    withTemplate: <Props extends JSX.Props>(
+      constructor: (
+        ctx?: Context,
+        ...classNames: { -readonly [K in keyof Styles]: Awaited<Styles[K]> }
+      ) => JSX.Component<Props>,
+    ) => (props: Props) => ObservableFragment;
+  };
+  withTemplate: <Props extends JSX.Props>(
+    constructor: (ctx?: Context | undefined) => JSX.Component<Props>,
+  ) => (props: Props) => ObservableFragment;
+} {
+  return (customElement?: string) => {
+    const withTemplate =
+      <Styles extends Promise<unknown>[]>(...styles: Styles) =>
+      <Props extends JSX.Props>(
+        constructor: (
+          ctx?: Context,
+          ...classNames: { -readonly [K in keyof Styles]: Awaited<Styles[K]> }
+        ) => JSX.Component<Props>,
+      ) =>
+      (props: Props) =>
+        createFragment({
+          children: defer(() =>
+            Promise.all(styles).then((cssModules) =>
+              cssStyleSheets(cssModules).then(async (cssStyleSheets) => {
+                const element = constructor(ctx, ...cssModules)(props);
 
-                      return customElement != null
-                        ? new (defineCustomElement(
-                            `${key}-${kebabCase(customElement)}`,
-                          ))(element, cssStyleSheets)
-                        : createFragment({
-                            children: element,
-                          }); /* TODO omit cssModules (whole workflow) */
-                    }),
-                  ),
-                ).pipe(share()),
+                return customElement != null
+                  ? new (defineCustomElement(
+                      `${await key}-${kebabCase(customElement)}`,
+                    ))(element, cssStyleSheets)
+                  : createFragment({
+                      children: element,
+                    }); /* TODO omit cssModules (whole workflow) */
               }),
-          );
-        }
-      };
+            ),
+          ).pipe(share()),
+        });
 
-  return {
-    withStyles: <Styles extends Promise<unknown>[]>(...styles: Styles) => ({
-      withTemplate: withTemplate(...styles),
-    }),
-    withTemplate: withTemplate(),
+    return {
+      withStyles: <Styles extends Promise<unknown>[]>(...styles: Styles) => ({
+        withTemplate: withTemplate(...styles),
+      }),
+      withTemplate: withTemplate(),
+    };
   };
 }
 
 export function createStandaloneComponent(customElement?: string) {
-  const withTemplate =
-    <Styles extends Promise<unknown>[]>(...styles: Styles) =>
-    <Props extends JSX.Props>(
-      constructor: (
-        ...classNames: { -readonly [K in keyof Styles]: Awaited<Styles[K]> }
-      ) => JSX.Component<Props>,
-    ): JSX.Component<Props> =>
-      new (createComponent(customElement)
-        .withStyles(...styles)
-        .withTemplate<{}, Props>((_, ...classNames) =>
-          constructor(...classNames),
-        ))({}).predicate("csc");
-
-  return {
-    withStyles: <Styles extends Promise<unknown>[]>(...styles: Styles) => ({
-      withTemplate: withTemplate(...styles),
-    }),
-    withTemplate: withTemplate(),
-  };
+  return createComponent(Promise.resolve("csc"))(customElement);
 }
 
 export class ComponentsAdapter<
