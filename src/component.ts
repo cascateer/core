@@ -81,7 +81,10 @@ export function createComponent<Context>(
           children: defer(() =>
             Promise.all(styles).then((cssModules) =>
               cssStyleSheets(cssModules).then(async (cssStyleSheets) => {
-                const element = constructor(ctx, ...cssModules)(props);
+                const element = constructor(
+                  ...(ctx != null ? [ctx] : []),
+                  ...cssModules,
+                )(props);
 
                 return customElement != null
                   ? new (defineCustomElement(
