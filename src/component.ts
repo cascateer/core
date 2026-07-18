@@ -15,9 +15,7 @@ export class ComponentConstructor<Props extends JSX.Props> {
   constructor(public predicate: UnaryFunction<string, JSX.Component<Props>>) {}
 }
 
-export function createComponent(key: Promise<string>): (
-  customElement?: string,
-) => {
+export function createComponent(key: string): (customElement?: string) => {
   withStyles: <Styles extends Promise<unknown>[]>(
     ...styles: Styles
   ) => {
@@ -32,7 +30,7 @@ export function createComponent(key: Promise<string>): (
   ) => (props: Props) => ObservableFragment;
 };
 export function createComponent<Context>(
-  key: Promise<string>,
+  key: string,
   ctx: Context,
 ): (customElement?: string) => {
   withStyles: <Styles extends Promise<unknown>[]>(
@@ -50,7 +48,7 @@ export function createComponent<Context>(
   ) => (props: Props) => ObservableFragment;
 };
 export function createComponent<Context>(
-  key: Promise<string>,
+  key: string,
   ctx?: Context,
 ): (customElement?: string) => {
   withStyles: <Styles extends Promise<unknown>[]>(
@@ -80,7 +78,7 @@ export function createComponent<Context>(
         createFragment({
           children: defer(() =>
             Promise.all(styles).then((cssModules) =>
-              cssStyleSheets(cssModules).then(async (cssStyleSheets) => {
+              cssStyleSheets(cssModules).then((cssStyleSheets) => {
                 const element = constructor(
                   ...(ctx != null ? [ctx] : []),
                   ...cssModules,
@@ -88,7 +86,7 @@ export function createComponent<Context>(
 
                 return customElement != null
                   ? new (defineCustomElement(
-                      `${await key}-${kebabCase(customElement)}`,
+                      `${key}-${kebabCase(customElement)}`,
                     ))(element, cssStyleSheets)
                   : createFragment({
                       children: element,
@@ -108,7 +106,7 @@ export function createComponent<Context>(
 }
 
 export function createStandaloneComponent(customElement?: string) {
-  return createComponent(Promise.resolve("csc"))(customElement);
+  return createComponent("csc")(customElement);
 }
 
 export class ComponentsAdapter<

@@ -57,7 +57,7 @@ interface SliceConfigProps<
   TerminalEffects extends Dictionary<TerminalEffect<any, any>>,
   TerminalActions extends Dictionary<Action<any, any>>,
 > {
-  key: Promise<string>;
+  key: string;
   data: Data;
   store: SliceConfigStore<Data, StoreSignals, StoreActions>;
   api: SliceConfigApi<ApiEffects, ApiActions>;
@@ -150,7 +150,7 @@ export const createSlice = (key: string) => ({
           >,
         ) =>
           new SliceConfig({
-            key: Promise.resolve(key),
+            key,
             data,
             store,
             api,
@@ -170,7 +170,7 @@ export class Slice<
   TerminalEffects extends Dictionary<TerminalEffect<any, any>>,
   TerminalActions extends Dictionary<Action<any, any>>,
 > {
-  public key: Promise<string>;
+  public key: string;
   public data: Data;
   public store: StoreAdapter<StoreSignals, StoreActions>;
   public api: SliceConfigApi<ApiEffects, ApiActions>;

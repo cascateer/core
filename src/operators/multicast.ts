@@ -77,8 +77,7 @@ export type MulticastConnectMessage = MulticastBaseMessage<
 
 export type MulticastHostMessage = MulticastActionMessage<any>;
 export type MulticastClientMessage =
-  | MulticastActionMessage<any>
-  | MulticastConnectMessage;
+  MulticastActionMessage<any> | MulticastConnectMessage;
 
 type MulticastMessage = MulticastHostMessage | MulticastClientMessage;
 
@@ -90,23 +89,18 @@ export interface MulticastSubject extends ProxySubject<
   MulticastHostMessage
 > {}
 
-export const multicast = <Seed>(
-  key: Promise<string>,
-  seed: Seed,
-): MulticastSubject =>
+export const multicast = <Seed>(key: string, seed: Seed): MulticastSubject =>
   new ProxyReplaySubject((messages) =>
     messages.pipe(
-      startWith(
-        ({ key, id }): MulticastConnectMessage => ({
-          id,
-          type: "connect",
-          data: {
-            key,
-            seed: JSON.stringify(seed),
-          },
-        }),
-      ),
-      concatMap((message) => key.then((key) => message({ key, id: v4() }))),
+      startWith(({ key, id }): MulticastConnectMessage => ({
+        id,
+        type: "connect",
+        data: {
+          key,
+          seed: JSON.stringify(seed),
+        },
+      })),
+      concatMap(async (message) => message({ key, id: v4() })),
       exchangeWith<MulticastHostMessage, MulticastClientMessage>(
         new SharedWorker(new URL("../multicast.ts", import.meta.url), {
           type: "module",
