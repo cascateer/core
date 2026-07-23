@@ -6,5 +6,5 @@ export { Serializable, type BrandedSerializer } from "./serializable";
 export { createSlice } from "./slice";
 export { type StoreEffect } from "./store";
 export { type TerminalEffect } from "./terminal";
-export { loadSample } from "./test";
+export { loadSample, SampleRegistry } from "./test";
 export { type Action, type Effect } from "./types";
