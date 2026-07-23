@@ -77,10 +77,10 @@ export class LazyStoreAdapter<
     private lazyActions: LazyDictionary<Action<any, any>, Actions>,
   ) {}
 
-  provideSignals<MoreSignals extends Dictionary<ComputedSignal<any>>>(
-    signals: UnaryFunction<
+  provideEffects<MoreSignals extends Dictionary<ComputedSignal<any>>>(
+    effects: UnaryFunction<
       {
-        signal: <T>(
+        effect: <T>(
           constructor: UnaryFunction<Signals, ComputedSignal<T>>,
         ) => ComputedSignal<T>;
       },
@@ -91,8 +91,8 @@ export class LazyStoreAdapter<
       this.transform,
       this.lazySignals.extend(
         (currentSignals) => () =>
-          signals({
-            signal: (constructor) => constructor(currentSignals),
+          effects({
+            effect: (constructor) => constructor(currentSignals),
           }),
       ),
       this.lazyActions,
