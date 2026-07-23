@@ -15,6 +15,7 @@
     "./jsx-runtime": "./src/jsx-runtime.ts",
     "./jsx-dev-runtime": "./src/jsx-dev-runtime.ts",
     "./operators": "./src/operators/index.ts",
+    "./test": "./src/test/index.ts",
     "./vite": "./src/vite.ts"
   },
   "devDependencies": {
