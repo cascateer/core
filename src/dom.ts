@@ -1,5 +1,5 @@
+import { createFragment } from "@cascateer/core/jsx-runtime";
 import { isObject, memoize } from "lodash";
-import { createFragment } from ".";
 
 export const insertNodes = <T extends Node>(...nodes: T[]) => ({
   before: (child: Node | null): T[] => {
