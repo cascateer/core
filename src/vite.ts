@@ -39,5 +39,3 @@ export const createDevServer = async () => {
 
   return server.listen();
 };
-
-createDevServer();
