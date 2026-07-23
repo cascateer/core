@@ -20,8 +20,8 @@ class SignalEnumerator<T> {
   enumerate = (value: T) => asEnumerable(value).map(this.predicate);
 }
 
-export class Signal<T> extends ProxyObservable<T> {
-  clone(): Signal<T> {
+export class Signal<D, T> extends ProxyObservable<T> {
+  clone(): Signal<D, T> {
     return this;
   }
 
@@ -30,39 +30,39 @@ export class Signal<T> extends ProxyObservable<T> {
   }
 
   enumerator: SignalEnumerator<T>;
-  pull: EndoFunctionOperator<T, unknown>;
+  retract: EndoFunctionOperator<T, D>;
 
   constructor({
     value,
     enumerator = new SignalEnumerator(),
-    pull = identity,
+    retract = identity,
   }: {
     value: Observable<T>;
     enumerator?: SignalEnumerator<T>;
-    pull?: EndoFunctionOperator<T, unknown>;
+    retract?: EndoFunctionOperator<T, D>;
   }) {
     super(value);
 
     this.enumerator = enumerator;
-    this.pull = pull;
+    this.retract = retract;
   }
 
   private map<U>(
     project: UnaryFunction<T, U>,
-    lift: EndoFunctionOperator<U, T>,
+    retract: EndoFunctionOperator<U, T>,
     enumerate?: Enumerator<U>,
-  ): Signal<U> {
+  ): Signal<D, U> {
     return new Signal({
       value: this.pipe(map(project), distinctUntilChanged()),
       enumerator: new SignalEnumerator(enumerate),
-      pull: (transform) => this.pull(lift(transform)),
+      retract: (transform) => this.retract(retract(transform)),
     });
   }
 
   protected property<K extends keyof T>(
     key: K,
     enumerate?: Enumerator<T[K]>,
-  ): Signal<T[K]> {
+  ): Signal<D, T[K]> {
     const findProperty: UnaryFunction<T, T[K]> = property(key);
 
     return this.map(
@@ -81,7 +81,7 @@ export class Signal<T> extends ProxyObservable<T> {
   protected item(
     key: PropertyKey,
     enumerate?: Enumerator<EnumerableItem<T>>,
-  ): Signal<EnumerableItem<T>> {
+  ): Signal<D, EnumerableItem<T>> {
     const findIndex = this.enumerator.findIndex(key);
     const findItem: UnaryFunction<T, EnumerableItem<T>> = (value) =>
       nonNullable(asEnumerable(value)[findIndex(value)]);
@@ -101,7 +101,7 @@ export class Signal<T> extends ProxyObservable<T> {
 
   protected collection<K extends keyof EnumerableItem<T>>(
     key: K,
-  ): Signal<EnumerableItem<T>[K][]> {
+  ): Signal<D, EnumerableItem<T>[K][]> {
     return this.map(
       (value) => asEnumerable(value).map(property(key)),
       (transform) => (value) => {
@@ -121,7 +121,7 @@ export class Signal<T> extends ProxyObservable<T> {
   }
 
   list<U>(
-    iteratee: (item: Signal<EnumerableItem<T>>, index: number) => U,
+    iteratee: (item: Signal<D, EnumerableItem<T>>, index: number) => U,
   ): Observable<U[]> {
     const memoizedIteratee = memoize<(key: PropertyKey, index: number) => U>(
       (key, index) => iteratee(this.item(key), index),
@@ -135,24 +135,24 @@ export class Signal<T> extends ProxyObservable<T> {
   }
 }
 
-export class ComputedSignal<T> extends Signal<T> {
+export class ComputedSignal<D, T = D> extends Signal<D, T> {
   property<K extends keyof T>(
     key: K,
     enumerate?: Enumerator<T[K]>,
-  ): ComputedSignal<T[K]> {
+  ): ComputedSignal<D, T[K]> {
     return new ComputedSignal(super.property(key, enumerate));
   }
 
   item(
     key: PropertyKey,
     enumerate?: Enumerator<EnumerableItem<T>>,
-  ): ComputedSignal<EnumerableItem<T>> {
+  ): ComputedSignal<D, EnumerableItem<T>> {
     return new ComputedSignal(super.item(key, enumerate));
   }
 
   collection<K extends keyof EnumerableItem<T>>(
     key: K,
-  ): ComputedSignal<EnumerableItem<T>[K][]> {
+  ): ComputedSignal<D, EnumerableItem<T>[K][]> {
     return new ComputedSignal(super.collection(key));
   }
 }

@@ -28,7 +28,8 @@ export class TerminalAdapter<
 }
 
 export class LazyTerminalAdapter<
-  StoreSignals extends Dictionary<ComputedSignal<any>>,
+  Data,
+  StoreSignals extends Dictionary<ComputedSignal<Data, any>>,
   StoreActions extends Dictionary<Action<any, any>>,
   ApiEffects extends Dictionary<ApiEffect<any, any>>,
   ApiActions extends Dictionary<Action<any, any>>,
@@ -44,7 +45,7 @@ export class LazyTerminalAdapter<
 
   constructor(
     private context: {
-      store: StoreAdapter<StoreSignals, StoreActions>;
+      store: StoreAdapter<Data, StoreSignals, StoreActions>;
       api: ApiAdapter<ApiEffects, ApiActions>;
     },
     private lazyEffects: LazyDictionary<TerminalEffect<any, any>, Effects>,
@@ -58,7 +59,7 @@ export class LazyTerminalAdapter<
           constructor: UnaryFunction<
             {
               store: {
-                effects: StoreEffects<StoreSignals>;
+                effects: StoreEffects<Data, StoreSignals>;
               };
               api: {
                 effects: ProxyEffects<ApiEffects>;
@@ -83,7 +84,9 @@ export class LazyTerminalAdapter<
               const interceptor = new ProxyEffectInterceptor();
               const source = {
                 store: {
-                  effects: asStoreEffects(this.context.store.signals),
+                  effects: asStoreEffects<Data, StoreSignals>(
+                    this.context.store.signals,
+                  ),
                 },
                 api: {
                   effects: interceptor.intercept(this.context.api.effects),
@@ -108,7 +111,7 @@ export class LazyTerminalAdapter<
           constructor: UnaryFunction<
             {
               store: {
-                effects: StoreEffects<StoreSignals>;
+                effects: StoreEffects<Data, StoreSignals>;
                 actions: StoreActions;
               };
               api: {
@@ -153,11 +156,13 @@ export class LazyTerminalAdapter<
 }
 
 export class TerminalProvider<
-  StoreSignals extends Dictionary<ComputedSignal<any>>,
+  Data,
+  StoreSignals extends Dictionary<ComputedSignal<Data, any>>,
   StoreActions extends Dictionary<Action<any, any>>,
   ApiEffects extends Dictionary<ApiEffect<any, any>>,
   ApiActions extends Dictionary<Action<any, any>>,
 > extends LazyTerminalAdapter<
+  Data,
   StoreSignals,
   StoreActions,
   ApiEffects,
@@ -167,7 +172,7 @@ export class TerminalProvider<
 > {
   constructor(context: {
     api: ApiAdapter<ApiEffects, ApiActions>;
-    store: StoreAdapter<StoreSignals, StoreActions>;
+    store: StoreAdapter<Data, StoreSignals, StoreActions>;
   }) {
     super(context, new LazyDictionary({}), new LazyDictionary({}));
   }

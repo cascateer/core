@@ -22,25 +22,32 @@ import { Serializable } from "./serializable";
 import { ComputedSignal, Signal } from "./signal";
 import { Action } from "./types";
 
-export type StoreEffect<Result> = () => Signal<Result>;
+type StoreEffect<Data, Result> = () => Signal<Data, Result>;
 
-export type StoreEffects<Signals extends Dictionary<ComputedSignal<any>>> = {
+export type StoreEffects<
+  Data,
+  Signals extends Dictionary<ComputedSignal<Data, any>>,
+> = {
   [K in keyof Signals]: ReturnType<
     <
-      Result extends (Signals[K] extends ComputedSignal<infer Result>
+      Result extends (Signals[K] extends ComputedSignal<Data, infer Result>
         ? Result
         : never),
-    >() => StoreEffect<Result>
+    >() => StoreEffect<Data, Result>
   >;
 };
 
-export const asStoreEffects = <Signals extends Dictionary<ComputedSignal<any>>>(
+export const asStoreEffects = <
+  Data,
+  Signals extends Dictionary<ComputedSignal<Data, any>>,
+>(
   signals: Signals,
-): StoreEffects<Signals> =>
+): StoreEffects<Data, Signals> =>
   mapValues(signals, (signal) => () => signal.clone());
 
 export class StoreAdapter<
-  Signals extends Dictionary<ComputedSignal<any>>,
+  Data,
+  Signals extends Dictionary<ComputedSignal<Data, any>>,
   Actions extends Dictionary<Action<any, any>>,
 > {
   constructor(
@@ -50,10 +57,11 @@ export class StoreAdapter<
 }
 
 export class LazyStoreAdapter<
-  Signals extends Dictionary<ComputedSignal<any>>,
+  Data,
+  Signals extends Dictionary<ComputedSignal<Data, any>>,
   Actions extends Dictionary<Action<any, any>>,
 > {
-  complete(): StoreAdapter<Signals, Actions> {
+  complete(): StoreAdapter<Data, Signals, Actions> {
     return new StoreAdapter(
       this.lazySignals.complete(),
       this.lazyActions.complete(),
@@ -70,19 +78,19 @@ export class LazyStoreAdapter<
         key: Promise<string>,
         handler: (
           action: MulticastBaseActionMessage<any, "transformAction">,
-        ) => MulticastAction<any, "transformAction">,
+        ) => MulticastAction<Data, "transformAction">,
       ) => void;
     },
-    private lazySignals: LazyDictionary<ComputedSignal<any>, Signals>,
+    private lazySignals: LazyDictionary<ComputedSignal<Data, any>, Signals>,
     private lazyActions: LazyDictionary<Action<any, any>, Actions>,
   ) {}
 
-  provideEffects<MoreSignals extends Dictionary<ComputedSignal<any>>>(
+  provideEffects<MoreSignals extends Dictionary<ComputedSignal<Data, any>>>(
     effects: UnaryFunction<
       {
         effect: <T>(
-          constructor: UnaryFunction<Signals, ComputedSignal<T>>,
-        ) => ComputedSignal<T>;
+          constructor: UnaryFunction<Signals, ComputedSignal<Data, T>>,
+        ) => ComputedSignal<Data, T>;
       },
       MoreSignals
     >,
@@ -107,7 +115,7 @@ export class LazyStoreAdapter<
             {
               [K in keyof Signals]: {
                 update: <
-                  T extends (Signals[K] extends ComputedSignal<infer T>
+                  T extends (Signals[K] extends ComputedSignal<Data, infer T>
                     ? T
                     : never),
                 >(
@@ -133,16 +141,17 @@ export class LazyStoreAdapter<
               action: (constructor) =>
                 property((key) =>
                   constructor(
-                    mapValues(this.lazySignals.currentValue, (signal) => ({
+                    mapValues(this.lazySignals.currentValue, (target) => ({
                       update: (predicate, config = {}) => {
                         const callbacks = new Map<
                           string,
-                          UnaryFunction<unknown, void>
+                          UnaryFunction<Data, void>
                         >();
 
                         this.transform.parse(key, (event) => ({
                           ...event,
-                          predicate: signal.pull(
+                          target,
+                          predicate: target.retract(
                             predicate(
                               Serializable.parse(event.data.args ?? null),
                             ),
@@ -151,7 +160,7 @@ export class LazyStoreAdapter<
                         }));
 
                         return (args) =>
-                          new Promise<unknown>((callback) =>
+                          new Promise<Data>((callback) =>
                             this.transform.share(
                               async ({ id }) => (
                                 callbacks.set(id, callback),
@@ -178,6 +187,7 @@ export class LazyStoreAdapter<
 }
 
 export class StoreProvider<Data> extends LazyStoreAdapter<
+  Data,
   { data: ComputedSignal<Data> },
   {}
 > {

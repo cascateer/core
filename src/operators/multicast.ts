@@ -59,7 +59,7 @@ export type MulticastAction<
   {
     [T in Type]: {
       type: T;
-      target?: ComputedSignal<Data>;
+      target?: ComputedSignal<Data, unknown>;
       predicate: MulticastActions<Data>[T]["predicate"];
       callback?: UnaryFunction<Data, void>;
     };

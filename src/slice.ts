@@ -11,7 +11,7 @@ import { Action } from "./types";
 
 interface SliceConfigStore<
   Data,
-  StoreSignals extends Dictionary<ComputedSignal<any>>,
+  StoreSignals extends Dictionary<ComputedSignal<Data, any>>,
   StoreActions extends Dictionary<Action<any, any>>,
 > extends UnaryFunction<
   {
@@ -19,7 +19,7 @@ interface SliceConfigStore<
       new (): StoreProvider<Data>;
     };
   },
-  StoreAdapter<StoreSignals, StoreActions>
+  StoreAdapter<Data, StoreSignals, StoreActions>
 > {}
 
 interface SliceConfigApi<
@@ -28,7 +28,8 @@ interface SliceConfigApi<
 > extends ApiAdapter<ApiEffects, ApiActions> {}
 
 interface SliceConfigTerminal<
-  StoreSignals extends Dictionary<ComputedSignal<any>>,
+  Data,
+  StoreSignals extends Dictionary<ComputedSignal<Data, any>>,
   StoreActions extends Dictionary<Action<any, any>>,
   ApiEffects extends Dictionary<ApiEffect<any, any>>,
   ApiActions extends Dictionary<Action<any, any>>,
@@ -38,6 +39,7 @@ interface SliceConfigTerminal<
   {
     TerminalProvider: {
       new (): TerminalProvider<
+        Data,
         StoreSignals,
         StoreActions,
         ApiEffects,
@@ -50,7 +52,7 @@ interface SliceConfigTerminal<
 
 interface SliceConfigProps<
   Data,
-  StoreSignals extends Dictionary<ComputedSignal<any>>,
+  StoreSignals extends Dictionary<ComputedSignal<Data, any>>,
   StoreActions extends Dictionary<Action<any, any>>,
   ApiEffects extends Dictionary<ApiEffect<any, any>>,
   ApiActions extends Dictionary<Action<any, any>>,
@@ -62,6 +64,7 @@ interface SliceConfigProps<
   store: SliceConfigStore<Data, StoreSignals, StoreActions>;
   api: SliceConfigApi<ApiEffects, ApiActions>;
   terminal: SliceConfigTerminal<
+    Data,
     StoreSignals,
     StoreActions,
     ApiEffects,
@@ -73,7 +76,7 @@ interface SliceConfigProps<
 
 class SliceConfig<
   Data,
-  StoreSignals extends Dictionary<ComputedSignal<any>>,
+  StoreSignals extends Dictionary<ComputedSignal<Data, any>>,
   StoreActions extends Dictionary<Action<any, any>>,
   ApiEffects extends Dictionary<ApiEffect<any, any>>,
   ApiActions extends Dictionary<Action<any, any>>,
@@ -107,7 +110,7 @@ class SliceConfig<
   createComponent(customElement?: string) {
     return createComponent(this.slice.key, {
       store: {
-        effects: asStoreEffects(this.slice.store.signals),
+        effects: asStoreEffects<Data, StoreSignals>(this.slice.store.signals),
         actions: this.slice.store.actions,
       },
       api: {
@@ -125,7 +128,7 @@ class SliceConfig<
 export const createSlice = (key: string) => ({
   withData: <Data>(data: Data) => ({
     withStore: <
-      StoreSignals extends Dictionary<ComputedSignal<any>>,
+      StoreSignals extends Dictionary<ComputedSignal<Data, any>>,
       StoreActions extends Dictionary<Action<any, any>>,
     >(
       store: SliceConfigStore<Data, StoreSignals, StoreActions>,
@@ -141,6 +144,7 @@ export const createSlice = (key: string) => ({
           TerminalActions extends Dictionary<Action<any, any>>,
         >(
           terminal: SliceConfigTerminal<
+            Data,
             StoreSignals,
             StoreActions,
             ApiEffects,
@@ -163,7 +167,7 @@ export const createSlice = (key: string) => ({
 
 export class Slice<
   Data,
-  StoreSignals extends Dictionary<ComputedSignal<any>>,
+  StoreSignals extends Dictionary<ComputedSignal<Data, any>>,
   StoreActions extends Dictionary<Action<any, any>>,
   ApiEffects extends Dictionary<ApiEffect<any, any>>,
   ApiActions extends Dictionary<Action<any, any>>,
@@ -172,7 +176,7 @@ export class Slice<
 > {
   public key: string;
   public data: Data;
-  public store: StoreAdapter<StoreSignals, StoreActions>;
+  public store: StoreAdapter<Data, StoreSignals, StoreActions>;
   public api: SliceConfigApi<ApiEffects, ApiActions>;
   public terminal: TerminalAdapter<TerminalEffects, TerminalActions>;
 
@@ -211,6 +215,7 @@ export class Slice<
     this.terminal = terminal({
       TerminalProvider: ((context) =>
         class extends TerminalProvider<
+          Data,
           StoreSignals,
           StoreActions,
           ApiEffects,
@@ -251,7 +256,7 @@ export class LazySliceAdapter<
       {
         slice: <
           Data,
-          StoreSignals extends Dictionary<ComputedSignal<any>>,
+          StoreSignals extends Dictionary<ComputedSignal<Data, any>>,
           StoreActions extends Dictionary<Action<any, any>>,
           ApiEffects extends Dictionary<ApiEffect<any, any>>,
           ApiActions extends Dictionary<Action<any, any>>,

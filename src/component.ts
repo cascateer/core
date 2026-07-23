@@ -1,19 +1,9 @@
-import { LazyDictionary } from "@cascateer/lib";
-import { Dictionary, kebabCase } from "lodash";
-import { defer, share, UnaryFunction } from "rxjs";
-import { createFragment } from ".";
-import { ApiAdapter, ApiEffect } from "./api";
+import { createFragment } from "@cascateer/core/jsx-runtime";
+import { kebabCase } from "lodash";
+import { defer, share } from "rxjs";
 import { cssStyleSheets } from "./css";
 import { defineCustomElement } from "./dom";
 import { ObservableFragment } from "./fragment";
-import { ComputedSignal } from "./signal";
-import { asStoreEffects, StoreAdapter, StoreEffects } from "./store";
-import { TerminalAdapter, TerminalEffect } from "./terminal";
-import { Action } from "./types";
-
-export class ComponentConstructor<Props extends JSX.Props> {
-  constructor(public predicate: UnaryFunction<string, JSX.Component<Props>>) {}
-}
 
 export function createComponent(key: string): (customElement?: string) => {
   withStyles: <Styles extends Promise<unknown>[]>(
@@ -107,114 +97,4 @@ export function createComponent<Context>(
 
 export function createStandaloneComponent(customElement?: string) {
   return createComponent("csc")(customElement);
-}
-
-export class ComponentsAdapter<
-  Components extends Dictionary<ComponentConstructor<any>>,
-> {
-  constructor(public components: Components) {}
-}
-
-export class LazyComponentsAdapter<
-  StoreSignals extends Dictionary<ComputedSignal<any>>,
-  StoreActions extends Dictionary<Action<any, any>>,
-  ApiEffects extends Dictionary<ApiEffect<any, any>>,
-  ApiActions extends Dictionary<Action<any, any>>,
-  TerminalEffects extends Dictionary<TerminalEffect<any, any>>,
-  TerminalActions extends Dictionary<Action<any, any>>,
-  Components extends Dictionary<ComponentConstructor<any>>,
-> {
-  complete(): ComponentsAdapter<Components> {
-    return new ComponentsAdapter(this.lazyComponents.complete());
-  }
-
-  constructor(
-    public context: {
-      store: StoreAdapter<StoreSignals, StoreActions>;
-      api: ApiAdapter<ApiEffects, ApiActions>;
-      terminal: TerminalAdapter<TerminalEffects, TerminalActions>;
-    },
-    private lazyComponents: LazyDictionary<
-      ComponentConstructor<any>,
-      Components
-    >,
-  ) {}
-
-  provideComponents<
-    MoreComponents extends Dictionary<ComponentConstructor<any>>,
-  >(
-    components: UnaryFunction<
-      {
-        component: <Props extends JSX.Props>(
-          constructor: UnaryFunction<
-            {
-              store: {
-                effects: StoreEffects<StoreSignals>;
-                actions: StoreActions;
-              };
-              api: {
-                effects: ApiEffects;
-                actions: ApiActions;
-              };
-              terminal: {
-                effects: TerminalEffects;
-                actions: TerminalActions;
-              };
-            },
-            ComponentConstructor<Props>
-          >,
-        ) => ComponentConstructor<Props>;
-      },
-      MoreComponents
-    >,
-  ) {
-    return new LazyComponentsAdapter(
-      this.context,
-      this.lazyComponents.extend(
-        () => () =>
-          components({
-            component: (constructor) =>
-              constructor({
-                store: {
-                  effects: asStoreEffects(this.context.store.signals),
-                  actions: this.context.store.actions,
-                },
-                api: {
-                  effects: this.context.api.effects,
-                  actions: this.context.api.actions,
-                },
-                terminal: {
-                  effects: this.context.terminal.effects,
-                  actions: this.context.terminal.actions,
-                },
-              }),
-          }),
-      ),
-    );
-  }
-}
-
-export class ComponentsProvider<
-  StoreSignals extends Dictionary<ComputedSignal<any>>,
-  StoreActions extends Dictionary<Action<any, any>>,
-  ApiEffects extends Dictionary<ApiEffect<any, any>>,
-  ApiActions extends Dictionary<Action<any, any>>,
-  TerminalEffects extends Dictionary<TerminalEffect<any, any>>,
-  TerminalActions extends Dictionary<Action<any, any>>,
-> extends LazyComponentsAdapter<
-  StoreSignals,
-  StoreActions,
-  ApiEffects,
-  ApiActions,
-  TerminalEffects,
-  TerminalActions,
-  {}
-> {
-  constructor(context: {
-    store: StoreAdapter<StoreSignals, StoreActions>;
-    api: ApiAdapter<ApiEffects, ApiActions>;
-    terminal: TerminalAdapter<TerminalEffects, TerminalActions>;
-  }) {
-    super(context, new LazyDictionary({}));
-  }
 }
