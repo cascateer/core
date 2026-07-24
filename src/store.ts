@@ -19,18 +19,18 @@ import {
   MulticastMessageConstructor,
 } from "./operators/multicast";
 import { Serializable } from "./serializable";
-import { ComputedSignal, Signal } from "./signal";
+import { DerivedSignal, Signal } from "./signal";
 import { Action } from "./types";
 
 type StoreEffect<Data, Result> = () => Signal<Data, Result>;
 
 export type StoreEffects<
   Data,
-  Signals extends Dictionary<ComputedSignal<Data, any>>,
+  Signals extends Dictionary<DerivedSignal<Data, any>>,
 > = {
   [K in keyof Signals]: ReturnType<
     <
-      Result extends (Signals[K] extends ComputedSignal<Data, infer Result>
+      Result extends (Signals[K] extends DerivedSignal<Data, infer Result>
         ? Result
         : never),
     >() => StoreEffect<Data, Result>
@@ -39,7 +39,7 @@ export type StoreEffects<
 
 export const asStoreEffects = <
   Data,
-  Signals extends Dictionary<ComputedSignal<Data, any>>,
+  Signals extends Dictionary<DerivedSignal<Data, any>>,
 >(
   signals: Signals,
 ): StoreEffects<Data, Signals> =>
@@ -47,7 +47,7 @@ export const asStoreEffects = <
 
 export class StoreAdapter<
   Data,
-  Signals extends Dictionary<ComputedSignal<Data, any>>,
+  Signals extends Dictionary<DerivedSignal<Data, any>>,
   Actions extends Dictionary<Action<any, any>>,
 > {
   constructor(
@@ -58,7 +58,7 @@ export class StoreAdapter<
 
 export class LazyStoreAdapter<
   Data,
-  Signals extends Dictionary<ComputedSignal<Data, any>>,
+  Signals extends Dictionary<DerivedSignal<Data, any>>,
   Actions extends Dictionary<Action<any, any>>,
 > {
   complete(): StoreAdapter<Data, Signals, Actions> {
@@ -81,16 +81,16 @@ export class LazyStoreAdapter<
         ) => MulticastAction<Data, "transformAction">,
       ) => void;
     },
-    private lazySignals: LazyDictionary<ComputedSignal<Data, any>, Signals>,
+    private lazySignals: LazyDictionary<DerivedSignal<Data, any>, Signals>,
     private lazyActions: LazyDictionary<Action<any, any>, Actions>,
   ) {}
 
-  provideEffects<MoreSignals extends Dictionary<ComputedSignal<Data, any>>>(
+  provideEffects<MoreSignals extends Dictionary<DerivedSignal<Data, any>>>(
     effects: UnaryFunction<
       {
         effect: <T>(
-          constructor: UnaryFunction<Signals, ComputedSignal<Data, T>>,
-        ) => ComputedSignal<Data, T>;
+          constructor: UnaryFunction<Signals, DerivedSignal<Data, T>>,
+        ) => DerivedSignal<Data, T>;
       },
       MoreSignals
     >,
@@ -115,7 +115,7 @@ export class LazyStoreAdapter<
             {
               [K in keyof Signals]: {
                 update: <
-                  T extends (Signals[K] extends ComputedSignal<Data, infer T>
+                  T extends (Signals[K] extends DerivedSignal<Data, infer T>
                     ? T
                     : never),
                 >(
@@ -188,7 +188,7 @@ export class LazyStoreAdapter<
 
 export class StoreProvider<Data> extends LazyStoreAdapter<
   Data,
-  { data: ComputedSignal<Data> },
+  { data: DerivedSignal<Data> },
   {}
 > {
   constructor({ actions }: { actions: MulticastSubject }) {
@@ -226,7 +226,7 @@ export class StoreProvider<Data> extends LazyStoreAdapter<
             .subscribe(transformActions),
       },
       new LazyDictionary({
-        data: new ComputedSignal({
+        data: new DerivedSignal({
           value: merge(seedActions, transformActions).pipe(
             tapOperator((action) => console.log(action)),
             reduce<MulticastAction<Data>, Data>(

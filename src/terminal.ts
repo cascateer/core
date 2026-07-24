@@ -2,7 +2,7 @@ import { LazyDictionary } from "@cascateer/lib";
 import { Dictionary } from "lodash";
 import { UnaryFunction } from "rxjs";
 import { ApiAdapter, ApiEffect } from "./api";
-import { ComputedSignal } from "./signal";
+import { DerivedSignal } from "./signal";
 import { asStoreEffects, StoreAdapter, StoreEffects } from "./store";
 import {
   Action,
@@ -29,7 +29,7 @@ export class TerminalAdapter<
 
 export class LazyTerminalAdapter<
   Data,
-  StoreSignals extends Dictionary<ComputedSignal<Data, any>>,
+  StoreSignals extends Dictionary<DerivedSignal<Data, any>>,
   StoreActions extends Dictionary<Action<any, any>>,
   ApiEffects extends Dictionary<ApiEffect<any, any>>,
   ApiActions extends Dictionary<Action<any, any>>,
@@ -157,7 +157,7 @@ export class LazyTerminalAdapter<
 
 export class TerminalProvider<
   Data,
-  StoreSignals extends Dictionary<ComputedSignal<Data, any>>,
+  StoreSignals extends Dictionary<DerivedSignal<Data, any>>,
   StoreActions extends Dictionary<Action<any, any>>,
   ApiEffects extends Dictionary<ApiEffect<any, any>>,
   ApiActions extends Dictionary<Action<any, any>>,

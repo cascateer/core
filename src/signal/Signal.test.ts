@@ -9,10 +9,10 @@ import {
   toArray,
 } from "rxjs";
 import { expect, test } from "vitest";
-import { ComputedSignal } from ".";
+import { DerivedSignal } from ".";
 
 test("projection", () => {
-  const signal = new ComputedSignal({
+  const signal = new DerivedSignal({
     value: of({ number: 1 }, { number: 2 }, { number: 3 }),
   }).property("number");
 
@@ -23,7 +23,7 @@ test("projection", () => {
 
 test("transformation", () => {
   const transforms = new ReplaySubject<EndoFunction<{ number: number }>>();
-  const signal = new ComputedSignal<{ number: number }>({
+  const signal = new DerivedSignal<{ number: number }>({
     value: transforms.pipe(
       startWith(identity),
       scan((state, transform) => transform(state), { number: 1 }),

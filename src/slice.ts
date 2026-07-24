@@ -4,14 +4,14 @@ import { UnaryFunction } from "rxjs";
 import { ApiAdapter, ApiEffect } from "./api";
 import { createComponent } from "./component";
 import { multicast, MulticastSubject } from "./operators";
-import { ComputedSignal } from "./signal";
+import { DerivedSignal } from "./signal";
 import { asStoreEffects, StoreAdapter, StoreProvider } from "./store";
 import { TerminalAdapter, TerminalEffect, TerminalProvider } from "./terminal";
 import { Action } from "./types";
 
 interface SliceConfigStore<
   Data,
-  StoreSignals extends Dictionary<ComputedSignal<Data, any>>,
+  StoreSignals extends Dictionary<DerivedSignal<Data, any>>,
   StoreActions extends Dictionary<Action<any, any>>,
 > extends UnaryFunction<
   {
@@ -29,7 +29,7 @@ interface SliceConfigApi<
 
 interface SliceConfigTerminal<
   Data,
-  StoreSignals extends Dictionary<ComputedSignal<Data, any>>,
+  StoreSignals extends Dictionary<DerivedSignal<Data, any>>,
   StoreActions extends Dictionary<Action<any, any>>,
   ApiEffects extends Dictionary<ApiEffect<any, any>>,
   ApiActions extends Dictionary<Action<any, any>>,
@@ -52,7 +52,7 @@ interface SliceConfigTerminal<
 
 interface SliceConfigProps<
   Data,
-  StoreSignals extends Dictionary<ComputedSignal<Data, any>>,
+  StoreSignals extends Dictionary<DerivedSignal<Data, any>>,
   StoreActions extends Dictionary<Action<any, any>>,
   ApiEffects extends Dictionary<ApiEffect<any, any>>,
   ApiActions extends Dictionary<Action<any, any>>,
@@ -76,7 +76,7 @@ interface SliceConfigProps<
 
 class SliceConfig<
   Data,
-  StoreSignals extends Dictionary<ComputedSignal<Data, any>>,
+  StoreSignals extends Dictionary<DerivedSignal<Data, any>>,
   StoreActions extends Dictionary<Action<any, any>>,
   ApiEffects extends Dictionary<ApiEffect<any, any>>,
   ApiActions extends Dictionary<Action<any, any>>,
@@ -128,7 +128,7 @@ class SliceConfig<
 export const createSlice = (key: string) => ({
   withData: <Data>(data: Data) => ({
     withStore: <
-      StoreSignals extends Dictionary<ComputedSignal<Data, any>>,
+      StoreSignals extends Dictionary<DerivedSignal<Data, any>>,
       StoreActions extends Dictionary<Action<any, any>>,
     >(
       store: SliceConfigStore<Data, StoreSignals, StoreActions>,
@@ -167,7 +167,7 @@ export const createSlice = (key: string) => ({
 
 export class Slice<
   Data,
-  StoreSignals extends Dictionary<ComputedSignal<Data, any>>,
+  StoreSignals extends Dictionary<DerivedSignal<Data, any>>,
   StoreActions extends Dictionary<Action<any, any>>,
   ApiEffects extends Dictionary<ApiEffect<any, any>>,
   ApiActions extends Dictionary<Action<any, any>>,
@@ -256,7 +256,7 @@ export class LazySliceAdapter<
       {
         slice: <
           Data,
-          StoreSignals extends Dictionary<ComputedSignal<Data, any>>,
+          StoreSignals extends Dictionary<DerivedSignal<Data, any>>,
           StoreActions extends Dictionary<Action<any, any>>,
           ApiEffects extends Dictionary<ApiEffect<any, any>>,
           ApiActions extends Dictionary<Action<any, any>>,

@@ -1,1 +1,1 @@
-export { ComputedSignal, Signal } from "./Signal";
+export { DerivedSignal, Signal } from "./Signal";

@@ -135,24 +135,24 @@ export class Signal<D, T> extends ProxyObservable<T> {
   }
 }
 
-export class ComputedSignal<D, T = D> extends Signal<D, T> {
+export class DerivedSignal<D, T = D> extends Signal<D, T> {
   property<K extends keyof T>(
     key: K,
     enumerate?: Enumerator<T[K]>,
-  ): ComputedSignal<D, T[K]> {
-    return new ComputedSignal(super.property(key, enumerate));
+  ): DerivedSignal<D, T[K]> {
+    return new DerivedSignal(super.property(key, enumerate));
   }
 
   item(
     key: PropertyKey,
     enumerate?: Enumerator<EnumerableItem<T>>,
-  ): ComputedSignal<D, EnumerableItem<T>> {
-    return new ComputedSignal(super.item(key, enumerate));
+  ): DerivedSignal<D, EnumerableItem<T>> {
+    return new DerivedSignal(super.item(key, enumerate));
   }
 
   collection<K extends keyof EnumerableItem<T>>(
     key: K,
-  ): ComputedSignal<D, EnumerableItem<T>[K][]> {
-    return new ComputedSignal(super.collection(key));
+  ): DerivedSignal<D, EnumerableItem<T>[K][]> {
+    return new DerivedSignal(super.collection(key));
   }
 }

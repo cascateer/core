@@ -2,7 +2,7 @@ import { EndoFunction } from "@cascateer/lib";
 import { ProxyReplaySubject, ProxySubject } from "@cascateer/lib/observable";
 import { concatMap, shareReplay, startWith, UnaryFunction } from "rxjs";
 import { v4 } from "uuid";
-import { ComputedSignal } from "../signal";
+import { DerivedSignal } from "../signal";
 import { exchangeWith } from "./exchangeWith";
 
 interface MulticastBaseMessage<Data, Type> {
@@ -59,7 +59,7 @@ export type MulticastAction<
   {
     [T in Type]: {
       type: T;
-      target?: ComputedSignal<Data, unknown>;
+      target?: DerivedSignal<Data, unknown>;
       predicate: MulticastActions<Data>[T]["predicate"];
       callback?: UnaryFunction<Data, void>;
     };
