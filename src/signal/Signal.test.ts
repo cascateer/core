@@ -1,6 +1,6 @@
 import { EndoFunction } from "@cascateer/lib";
-import { identity } from "lodash";
 import {
+  identity,
   lastValueFrom,
   of,
   ReplaySubject,
@@ -16,14 +16,14 @@ test("projection", () => {
     value: of({ number: 1 }, { number: 2 }, { number: 3 }),
   }).property("number");
 
-  lastValueFrom(signal.pipe(toArray())).then((numbers) =>
+  return lastValueFrom(signal.pipe(toArray())).then((numbers) =>
     expect(numbers).toEqual([1, 2, 3]),
   );
 });
 
 test("transformation", () => {
-  const transforms = new ReplaySubject<EndoFunction<any>>();
-  const signal = new ComputedSignal({
+  const transforms = new ReplaySubject<EndoFunction<{ number: number }>>();
+  const signal = new ComputedSignal<{ number: number }>({
     value: transforms.pipe(
       startWith(identity),
       scan((state, transform) => transform(state), { number: 1 }),
