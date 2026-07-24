@@ -1,6 +1,8 @@
 import { Dictionary } from "lodash";
-import { Brand, identity } from "ts-brand";
+import { Brand } from "utility-types";
 import { v4 } from "uuid";
+
+enum SerializerBrand {}
 
 interface SerializerResult<O> {
   value: O;
@@ -8,12 +10,8 @@ interface SerializerResult<O> {
 }
 
 export interface Serializer<O> {
-  (): SerializerResult<O>;
+  (): Brand<SerializerResult<O>, SerializerBrand>;
 }
-
-enum SerializerBrand {}
-
-export type BrandedSerializer<O> = Brand<Serializer<O>, SerializerBrand>;
 
 interface SerializableConstructor<T, O> {
   name: string;
@@ -46,16 +44,17 @@ export abstract class Serializable<O> {
   static toJSON<T, O>(
     ctor: SerializableConstructor<T, O>,
     value: Serializable<O>,
-  ): BrandedSerializer<O> {
+  ): Serializer<O> {
     const IMPORT_MAP = "importMap",
       UUID = v4();
 
     this[IMPORT_MAP][UUID] = ctor;
 
-    return identity<BrandedSerializer<O>>(() => ({
-      value: value.toObject(),
-      $ref: `${import.meta.url}#${[this.name, IMPORT_MAP, UUID].join("/")}`,
-    }));
+    return () =>
+      ({
+        value: value.toObject(),
+        $ref: `${import.meta.url}#${[this.name, IMPORT_MAP, UUID].join("/")}`,
+      }) as Brand<SerializerResult<O>, SerializerBrand>;
   }
 
   static parse(text: string) {
@@ -65,5 +64,5 @@ export abstract class Serializable<O> {
   }
 
   abstract toObject(): O;
-  abstract toJSON: BrandedSerializer<O>;
+  abstract toJSON: Serializer<O>;
 }
