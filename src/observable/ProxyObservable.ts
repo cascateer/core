@@ -1,6 +1,8 @@
-import { once, tap, thru } from "lodash";
+import { property } from "@cascateer/lib";
+import { Dictionary, Function1, once, tap, thru } from "lodash";
 import {
   BehaviorSubject,
+  combineLatest,
   isObservable,
   map,
   NextObserver,
@@ -11,6 +13,9 @@ import {
   switchAll,
   UnaryFunction,
 } from "rxjs";
+import { memoize } from "../lib/memoize";
+import { every, some } from "../operators";
+import { Effect } from "../types";
 
 export class ProxyObservable<
   T,
@@ -56,4 +61,53 @@ export class ProxyObservable<
       pending.next(handler(memoizedTarget(), this));
     }
   }
+
+  static combineLatest = <T, Args, Result>({
+    intercept,
+    project,
+  }: {
+    intercept: (
+      proxy: <Args, Result>(
+        effect: ProxyEffect<Args, Result>,
+      ) => ProxyEffect<Args, Result>,
+    ) => T;
+    project: Function1<T, Effect<Args, Result>>;
+  }): ProxyEffect<Args, Result> => {
+    const sources = new Array<ProxyObservable<any>>();
+    const effect = project(
+      intercept((effect) =>
+        memoize((args) =>
+          tap(
+            new ProxyObservable(effect(args), (target, receiver) =>
+              combineLatest([target.pending, receiver.refCount]).pipe(every()),
+            ),
+            (source) => sources.push(source),
+          ),
+        ),
+      ),
+    );
+
+    return (args) =>
+      new ProxyObservable(effect(args), () =>
+        combineLatest(sources.map(property("pending"))).pipe(some()),
+      );
+  };
 }
+
+export interface ProxyEffect<Args, Result> extends UnaryFunction<
+  Args,
+  ProxyObservable<Result>
+> {}
+
+export type ProxyEffects<Effects extends Dictionary<ProxyEffect<any, any>>> = {
+  [K in keyof Effects]: ReturnType<
+    <
+      Args extends (Effects[K] extends ProxyEffect<infer Args, infer _>
+        ? Args
+        : never),
+      Result extends (Effects[K] extends ProxyEffect<infer _, infer Result>
+        ? Result
+        : never),
+    >() => ProxyEffect<Args, Result>
+  >;
+};

@@ -1,16 +1,15 @@
 import { LazyDictionary } from "@cascateer/lib";
-import { Dictionary } from "lodash";
+import { Dictionary, mapValues } from "lodash";
 import { UnaryFunction } from "rxjs";
 import { ApiAdapter, ApiEffect } from "./api";
+import {
+  ProxyEffect,
+  ProxyEffects,
+  ProxyObservable,
+} from "./observable/ProxyObservable";
 import { DerivedSignal } from "./signal";
 import { asStoreEffects, StoreAdapter, StoreEffects } from "./store";
-import {
-  Action,
-  Effect,
-  ProxyEffect,
-  ProxyEffectInterceptor,
-  ProxyEffects,
-} from "./types";
+import { Action, Effect } from "./types";
 
 export interface TerminalEffect<Args, Result> extends ProxyEffect<
   Args,
@@ -80,24 +79,23 @@ export class LazyTerminalAdapter<
       this.lazyEffects.extend(
         (currentEffects) => () =>
           effects({
-            effect: (constructor) => {
-              const interceptor = new ProxyEffectInterceptor();
-              const source = {
-                store: {
-                  effects: asStoreEffects<Data, StoreSignals>(
-                    this.context.store.signals,
-                  ),
-                },
-                api: {
-                  effects: interceptor.intercept(this.context.api.effects),
-                },
-                terminal: {
-                  effects: interceptor.intercept(currentEffects),
-                },
-              };
-
-              return interceptor.proxy(constructor(source));
-            },
+            effect: (project) =>
+              ProxyObservable.combineLatest({
+                intercept: (proxy) => ({
+                  store: {
+                    effects: asStoreEffects<Data, StoreSignals>(
+                      this.context.store.signals,
+                    ),
+                  },
+                  api: {
+                    effects: mapValues(this.context.api.effects, proxy),
+                  },
+                  terminal: {
+                    effects: mapValues(currentEffects, proxy),
+                  },
+                }),
+                project,
+              }),
           }),
       ),
       this.lazyActions,

@@ -23,7 +23,8 @@ import {
 } from "rxjs";
 import { memoize } from "./lib/memoize";
 import { ProxyObservable } from "./observable";
-import { Action, ProxyEffect } from "./types";
+import { ProxyEffect } from "./observable/ProxyObservable";
+import { Action } from "./types";
 
 type MemoizableTagsFactory<Args, Result> = MaybeFunction<
   [Args, Result],
