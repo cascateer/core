@@ -11,10 +11,11 @@ import {
   scan,
   Subscriber,
   switchAll,
+  switchMap,
   UnaryFunction,
 } from "rxjs";
 import { memoize } from "../lib/memoize";
-import { every, some } from "../operators";
+import { accumulate, every, some } from "../operators";
 import { Effect } from "../types";
 
 export class ProxyObservable<
@@ -73,7 +74,7 @@ export class ProxyObservable<
     ) => T;
     project: Function1<T, Effect<Args, Result>>;
   }): ProxyEffect<Args, Result> => {
-    const sources = new Array<ProxyObservable<any>>();
+    const sources = new ReplaySubject<ProxyObservable<any>>();
     const effect = project(
       intercept((effect) =>
         memoize((args) =>
@@ -81,7 +82,7 @@ export class ProxyObservable<
             new ProxyObservable(effect(args), (target, receiver) =>
               combineLatest([target.pending, receiver.refCount]).pipe(every()),
             ),
-            (source) => sources.push(source),
+            (source) => sources.next(source),
           ),
         ),
       ),
@@ -89,7 +90,13 @@ export class ProxyObservable<
 
     return (args) =>
       new ProxyObservable(effect(args), () =>
-        combineLatest(sources.map(property("pending"))).pipe(some()),
+        sources.pipe(
+          accumulate(),
+          switchMap((sources) =>
+            combineLatest(sources.map(property("pending"))),
+          ),
+          some(),
+        ),
       );
   };
 }
