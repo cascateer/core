@@ -63,7 +63,7 @@ export class ProxyObservable<
     }
   }
 
-  static combineLatest = <T, Args, Result>({
+  static combineEffects = <T, Args, Result>({
     intercept,
     project,
   }: {

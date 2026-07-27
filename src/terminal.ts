@@ -80,7 +80,7 @@ export class LazyTerminalAdapter<
         (currentEffects) => () =>
           effects({
             effect: (project) =>
-              ProxyObservable.combineLatest({
+              ProxyObservable.combineEffects({
                 intercept: (proxy) => ({
                   store: {
                     effects: asStoreEffects<Data, StoreSignals>(
