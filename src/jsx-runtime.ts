@@ -156,7 +156,10 @@ export const createElement = (
                     source: Dictionary<unknown>,
                   ) => {
                     for (const [name, value] of Object.entries(source)) {
-                      target.setProperty(kebabCase(name), String(value));
+                      target.setProperty(
+                        name.startsWith("--") ? name : kebabCase(name),
+                        String(value),
+                      );
                     }
 
                     return source;
