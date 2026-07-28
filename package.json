@@ -24,11 +24,11 @@
     "@types/node": "^26.1.2",
     "@types/object-hash": "^3.0.6",
     "@types/react": "^19.2.17",
-    "typescript": "~7.0.2",
+    "typescript": "^7.0.2",
     "vitest": "^4.1.10"
   },
   "dependencies": {
-    "@cascateer/lib": "^1.0.78",
+    "@cascateer/lib": "^1.0.81",
     "lodash": "^4.18.1",
     "object-hash": "^3.0.0",
     "rxjs": "^7.8.2",

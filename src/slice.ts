@@ -1,10 +1,9 @@
 import { LazyDictionary } from "@cascateer/lib";
-import { Dictionary } from "lodash";
-import { UnaryFunction } from "rxjs";
+import { DerivedSignal } from "@cascateer/lib/observable";
+import { Dictionary, Function1 } from "lodash";
 import { ApiAdapter, ApiEffect } from "./api";
 import { createComponent } from "./component";
 import { multicast, MulticastSubject } from "./operators";
-import { DerivedSignal } from "./signal";
 import { asStoreEffects, StoreAdapter, StoreProvider } from "./store";
 import { TerminalAdapter, TerminalEffect, TerminalProvider } from "./terminal";
 import { Action } from "./types";
@@ -13,7 +12,7 @@ interface SliceConfigStore<
   Data,
   StoreSignals extends Dictionary<DerivedSignal<Data, any>>,
   StoreActions extends Dictionary<Action<any, any>>,
-> extends UnaryFunction<
+> extends Function1<
   {
     StoreProvider: {
       new (): StoreProvider<Data>;
@@ -35,7 +34,7 @@ interface SliceConfigTerminal<
   ApiActions extends Dictionary<Action<any, any>>,
   TerminalEffects extends Dictionary<TerminalEffect<any, any>>,
   TerminalActions extends Dictionary<Action<any, any>>,
-> extends UnaryFunction<
+> extends Function1<
   {
     TerminalProvider: {
       new (): TerminalProvider<
@@ -252,7 +251,7 @@ export class LazySliceAdapter<
   provideSlices<
     MoreSlices extends Dictionary<Slice<any, any, any, any, any, any, any>>,
   >(
-    slices: UnaryFunction<
+    slices: Function1<
       {
         slice: <
           Data,
@@ -263,7 +262,7 @@ export class LazySliceAdapter<
           TerminalEffects extends Dictionary<TerminalEffect<any, any>>,
           TerminalActions extends Dictionary<Action<any, any>>,
         >(
-          constructor: UnaryFunction<
+          constructor: Function1<
             void,
             SliceConfigProps<
               Data,

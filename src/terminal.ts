@@ -1,15 +1,15 @@
 import { LazyDictionary } from "@cascateer/lib";
-import { Dictionary, mapValues } from "lodash";
-import { UnaryFunction } from "rxjs";
+import { DerivedSignal } from "@cascateer/lib/observable";
+import { Dictionary, Function1, mapValues } from "lodash";
 import { ApiAdapter, ApiEffect } from "./api";
+import { asStoreEffects, StoreAdapter, StoreEffects } from "./store";
 import {
+  Action,
   combineProxyEffects,
+  Effect,
   ProxyEffect,
   ProxyEffects,
-} from "./observable/ProxyObservable";
-import { DerivedSignal } from "./signal";
-import { asStoreEffects, StoreAdapter, StoreEffects } from "./store";
-import { Action, Effect } from "./types";
+} from "./types";
 
 export interface TerminalEffect<Args, Result> extends ProxyEffect<
   Args,
@@ -52,10 +52,10 @@ export class LazyTerminalAdapter<
   ) {}
 
   provideEffects<MoreEffects extends Dictionary<TerminalEffect<any, any>>>(
-    effects: UnaryFunction<
+    effects: Function1<
       {
         effect: <Args, Result>(
-          constructor: UnaryFunction<
+          constructor: Function1<
             {
               store: {
                 effects: StoreEffects<Data, StoreSignals>;
@@ -103,10 +103,10 @@ export class LazyTerminalAdapter<
   }
 
   provideActions<MoreActions extends Dictionary<Action<any, any>>>(
-    actions: UnaryFunction<
+    actions: Function1<
       {
         action: <Args, Result>(
-          constructor: UnaryFunction<
+          constructor: Function1<
             {
               store: {
                 effects: StoreEffects<Data, StoreSignals>;

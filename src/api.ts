@@ -7,6 +7,7 @@ import {
   MaybeFunction,
   MaybeObservable,
 } from "@cascateer/lib";
+import { ProxyObservable } from "@cascateer/lib/observable";
 import { Dictionary, flow, Function1, Function2, intersection } from "lodash";
 import {
   combineLatest,
@@ -22,9 +23,7 @@ import {
   tap,
 } from "rxjs";
 import { memoize } from "./lib/memoize";
-import { ProxyObservable } from "./observable";
-import { ProxyEffect } from "./observable/ProxyObservable";
-import { Action } from "./types";
+import { Action, ProxyEffect } from "./types";
 
 type MemoizableTagsFactory<Args, Result> = MaybeFunction<
   [Args, Result],

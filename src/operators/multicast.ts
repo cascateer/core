@@ -1,8 +1,12 @@
 import { EndoFunction } from "@cascateer/lib";
-import { ProxyReplaySubject, ProxySubject } from "@cascateer/lib/observable";
-import { concatMap, shareReplay, startWith, UnaryFunction } from "rxjs";
+import {
+  DerivedSignal,
+  ProxyReplaySubject,
+  ProxySubject,
+} from "@cascateer/lib/observable";
+import { Function1 } from "lodash";
+import { concatMap, shareReplay, startWith } from "rxjs";
 import { v4 } from "uuid";
-import { DerivedSignal } from "../signal";
 import { exchangeWith } from "./exchangeWith";
 
 interface MulticastBaseMessage<Data, Type> {
@@ -61,7 +65,7 @@ export type MulticastAction<
       type: T;
       target?: DerivedSignal<Data, unknown>;
       predicate: MulticastActions<Data>[T]["predicate"];
-      callback?: UnaryFunction<Data, void>;
+      callback?: Function1<Data, void>;
     };
   }[Type];
 
@@ -82,7 +86,7 @@ export type MulticastClientMessage =
 type MulticastMessage = MulticastHostMessage | MulticastClientMessage;
 
 export type MulticastMessageConstructor<Message extends MulticastMessage> =
-  UnaryFunction<Record<"key" | "id", string>, Promise<Message>>;
+  Function1<Record<"key" | "id", string>, Promise<Message>>;
 
 export interface MulticastSubject extends ProxySubject<
   MulticastMessageConstructor<MulticastClientMessage>,

@@ -11,6 +11,7 @@ import {
   bind,
   camelCase,
   Dictionary,
+  Function1,
   isFunction,
   isObject,
   kebabCase,
@@ -23,7 +24,6 @@ import {
   map,
   ObservableInputTuple,
   Observer,
-  UnaryFunction,
 } from "rxjs";
 import { Primitive } from "utility-types";
 import { removeNodes } from "./dom";
@@ -31,7 +31,7 @@ import { ObservableFragment } from "./fragment";
 
 type DocumentEventListener<EventName extends keyof DocumentEventMap> =
   | Partial<Observer<DocumentEventMap[EventName]>>
-  | UnaryFunction<DocumentEventMap[EventName], void>;
+  | Function1<DocumentEventMap[EventName], void>;
 
 declare global {
   namespace JSX {

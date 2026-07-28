@@ -1,6 +1,11 @@
 import { EndoFunction, LazyDictionary, Serializable } from "@cascateer/lib";
-import { flatMap, reduce } from "@cascateer/lib/observable";
-import { constant, Dictionary, mapValues, noop, tap } from "lodash";
+import {
+  DerivedSignal,
+  flatMap,
+  reduce,
+  Signal,
+} from "@cascateer/lib/observable";
+import { constant, Dictionary, Function1, mapValues, noop, tap } from "lodash";
 import {
   merge,
   mergeMap,
@@ -8,7 +13,6 @@ import {
   ReplaySubject,
   shareReplay,
   tap as tapOperator,
-  UnaryFunction,
 } from "rxjs";
 import { MulticastAction, MulticastSubject } from "./operators";
 import {
@@ -18,7 +22,6 @@ import {
   MulticastClientMessage,
   MulticastMessageConstructor,
 } from "./operators/multicast";
-import { DerivedSignal, Signal } from "./signal";
 import { Action } from "./types";
 
 type StoreEffect<Data, Result> = () => Signal<Data, Result>;
@@ -69,7 +72,7 @@ export class LazyStoreAdapter<
 
   constructor(
     public transform: {
-      share: UnaryFunction<
+      share: Function1<
         MulticastMessageConstructor<MulticastClientMessage>,
         void
       >;
@@ -85,10 +88,10 @@ export class LazyStoreAdapter<
   ) {}
 
   provideEffects<MoreSignals extends Dictionary<DerivedSignal<Data, any>>>(
-    effects: UnaryFunction<
+    effects: Function1<
       {
         effect: <T>(
-          constructor: UnaryFunction<Signals, DerivedSignal<Data, T>>,
+          constructor: Function1<Signals, DerivedSignal<Data, T>>,
         ) => DerivedSignal<Data, T>;
       },
       MoreSignals
@@ -107,10 +110,10 @@ export class LazyStoreAdapter<
   }
 
   provideActions<MoreActions extends Dictionary<Action<any, any>>>(
-    actions: UnaryFunction<
+    actions: Function1<
       {
         action: <Args>(
-          constructor: UnaryFunction<
+          constructor: Function1<
             {
               [K in keyof Signals]: {
                 update: <
@@ -118,7 +121,7 @@ export class LazyStoreAdapter<
                     ? T
                     : never),
                 >(
-                  predicate: UnaryFunction<Args, EndoFunction<T>>,
+                  predicate: Function1<Args, EndoFunction<T>>,
                   config?: { sameOrigin?: boolean },
                 ) => Action<Args, Data>;
               };
@@ -144,7 +147,7 @@ export class LazyStoreAdapter<
                       update: (predicate, config = {}) => {
                         const callbacks = new Map<
                           string,
-                          UnaryFunction<Data, void>
+                          Function1<Data, void>
                         >();
 
                         this.transform.parse(key, (event) => ({
