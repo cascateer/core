@@ -1,6 +1,6 @@
 import { property } from "@cascateer/lib";
 import { flatMap, ProxyReplaySubject, reduce } from "@cascateer/lib/observable";
-import { partition, tap, thru, uniq, uniqBy } from "lodash";
+import { partition, tap, thru, uniqBy } from "lodash";
 import {
   distinct,
   filter,
@@ -40,7 +40,7 @@ type InMessages = {
 
 type OutMessages = {
   actions: MulticastActionMessage<any>[];
-  ports: MessagePort[];
+  ports: Set<MessagePort>;
 };
 
 const actions = new ProxyReplaySubject<Observable<InMessages>, OutMessages>(
@@ -51,27 +51,31 @@ const actions = new ProxyReplaySubject<Observable<InMessages>, OutMessages>(
       mergeMap((group) =>
         group.pipe(
           scan<InMessages, OutMessages>(
-            (outMessages, inMessages, index) => ({
-              actions: uniqBy(
-                outMessages.actions.concat(
-                  index === 0
-                    ? {
-                        id: v4(),
-                        type: "seedAction" as const,
-                        data: inMessages.connect.data,
-                      }
-                    : [],
-                  ...inMessages.actions,
+            (outMessages, inMessages, index) => {
+              if (inMessages.connect.origin != null) {
+                outMessages.ports.add(inMessages.connect.origin);
+              }
+
+              return {
+                actions: uniqBy(
+                  outMessages.actions.concat(
+                    index === 0
+                      ? {
+                          id: v4(),
+                          type: "seedAction" as const,
+                          data: inMessages.connect.data,
+                        }
+                      : [],
+                    ...inMessages.actions,
+                  ),
+                  property("id"),
                 ),
-                property("id"),
-              ),
-              ports: uniq(
-                outMessages.ports.concat(inMessages.connect.origin ?? []),
-              ),
-            }),
+                ports: outMessages.ports,
+              };
+            },
             {
               actions: new Array<MulticastActionMessage<any>>(),
-              ports: new Array<MessagePort>(),
+              ports: new Set<MessagePort>(),
             },
           ),
         ),
@@ -84,7 +88,7 @@ self.addEventListener("connect", ({ ports }) => {
   for (const port of ports) {
     actions.next(
       actions.pipe(
-        flatMap(({ ports, actions }) => (ports.includes(port) ? actions : [])),
+        flatMap(({ ports, actions }) => (ports.has(port) ? actions : [])),
         distinct(property("id")),
         filter((message) => !message.sameOrigin || message.origin === port),
         reduce(
