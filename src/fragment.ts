@@ -75,7 +75,7 @@ export class ObservableFragment extends AnchorFragment {
                 element instanceof ObservableFragment
                   ? element.nodes
                   : of(
-                      element == null
+                      element == null || element === false
                         ? []
                         : isPrimitive(element)
                           ? new Text(element?.toString())
