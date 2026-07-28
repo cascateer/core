@@ -4,10 +4,27 @@ import { isObject, memoize } from "lodash";
 export const insertNodes = <T extends Node>(...nodes: T[]) => ({
   before: (child: Node | null): T[] => {
     for (const node of nodes) {
-      if (!(node instanceof Node)) {
-        console.log(nodes, node);
+      /**
+       * // FIXME
+       *
+       * This should not be necessary. But somehow with empty elements (< />)
+       * children started to appear that aren't Nodes, but of the kind
+       *    {
+       *        fileName: `{/**\/*.tsx}`;
+       *        lineNumber: number;
+       *        columnNumber: number;
+       *    }
+       *
+       * This causes runtime errors of the kind
+       *    "Uncaught TypeError: Failed to execute 'insertBefore' on 'Node': parameter 1 is not of type 'Node'."
+       * that can be avoided by replacing
+       *    <div />
+       * , say, with
+       *    <div>{null}</div>
+       *  */
+      if (node instanceof Node) {
+        child?.parentNode?.insertBefore(node, child);
       }
-      child?.parentNode?.insertBefore(node, child);
     }
 
     return nodes;
