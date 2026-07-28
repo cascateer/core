@@ -4,6 +4,9 @@ import { isObject, memoize } from "lodash";
 export const insertNodes = <T extends Node>(...nodes: T[]) => ({
   before: (child: Node | null): T[] => {
     for (const node of nodes) {
+      if (!(node instanceof Node)) {
+        console.log(nodes, node);
+      }
       child?.parentNode?.insertBefore(node, child);
     }
 
