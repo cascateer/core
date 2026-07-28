@@ -3,9 +3,9 @@ import { Dictionary, mapValues } from "lodash";
 import { UnaryFunction } from "rxjs";
 import { ApiAdapter, ApiEffect } from "./api";
 import {
+  combineProxyEffects,
   ProxyEffect,
   ProxyEffects,
-  ProxyObservable,
 } from "./observable/ProxyObservable";
 import { DerivedSignal } from "./signal";
 import { asStoreEffects, StoreAdapter, StoreEffects } from "./store";
@@ -80,7 +80,7 @@ export class LazyTerminalAdapter<
         (currentEffects) => () =>
           effects({
             effect: (project) =>
-              ProxyObservable.combineEffects({
+              combineProxyEffects({
                 intercept: (proxy) => ({
                   store: {
                     effects: asStoreEffects<Data, StoreSignals>(

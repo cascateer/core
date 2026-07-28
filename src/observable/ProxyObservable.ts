@@ -62,43 +62,6 @@ export class ProxyObservable<
       pending.next(handler(memoizedTarget(), this));
     }
   }
-
-  static combineEffects = <T, Args, Result>({
-    intercept,
-    project,
-  }: {
-    intercept: (
-      proxy: <Args, Result>(
-        effect: ProxyEffect<Args, Result>,
-      ) => ProxyEffect<Args, Result>,
-    ) => T;
-    project: Function1<T, Effect<Args, Result>>;
-  }): ProxyEffect<Args, Result> => {
-    const sources = new ReplaySubject<ProxyObservable<any>>();
-    const effect = project(
-      intercept((effect) =>
-        memoize((args) =>
-          tap(
-            new ProxyObservable(effect(args), (target, receiver) =>
-              combineLatest([target.pending, receiver.refCount]).pipe(every()),
-            ),
-            (source) => sources.next(source),
-          ),
-        ),
-      ),
-    );
-
-    return (args) =>
-      new ProxyObservable(effect(args), () =>
-        sources.pipe(
-          accumulate(),
-          switchMap((sources) =>
-            combineLatest(sources.map(property("pending"))),
-          ),
-          some(),
-        ),
-      );
-  };
 }
 
 export interface ProxyEffect<Args, Result> extends UnaryFunction<
@@ -117,4 +80,39 @@ export type ProxyEffects<Effects extends Dictionary<ProxyEffect<any, any>>> = {
         : never),
     >() => ProxyEffect<Args, Result>
   >;
+};
+
+export const combineProxyEffects = <T, Args, Result>({
+  intercept,
+  project,
+}: {
+  intercept: (
+    proxy: <Args, Result>(
+      effect: ProxyEffect<Args, Result>,
+    ) => ProxyEffect<Args, Result>,
+  ) => T;
+  project: Function1<T, Effect<Args, Result>>;
+}): ProxyEffect<Args, Result> => {
+  const sources = new ReplaySubject<ProxyObservable<any>>();
+  const effect = project(
+    intercept((effect) =>
+      memoize((args) =>
+        tap(
+          new ProxyObservable(effect(args), (target, receiver) =>
+            combineLatest([target.pending, receiver.refCount]).pipe(every()),
+          ),
+          (source) => sources.next(source),
+        ),
+      ),
+    ),
+  );
+
+  return (args) =>
+    new ProxyObservable(effect(args), () =>
+      sources.pipe(
+        accumulate(),
+        switchMap((sources) => combineLatest(sources.map(property("pending")))),
+        some(),
+      ),
+    );
 };
