@@ -105,8 +105,6 @@ export const createElement = (
       ),
     );
 
-  console.log({ tagContent });
-
   switch (typeof component) {
     case "function":
       return component({ ...propsWithoutChildren, children });
