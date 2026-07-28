@@ -1,4 +1,4 @@
-import { EndoFunction, LazyDictionary } from "@cascateer/lib";
+import { EndoFunction, LazyDictionary, Serializable } from "@cascateer/lib";
 import { flatMap, reduce } from "@cascateer/lib/observable";
 import { constant, Dictionary, mapValues, noop, tap } from "lodash";
 import {
@@ -18,7 +18,6 @@ import {
   MulticastClientMessage,
   MulticastMessageConstructor,
 } from "./operators/multicast";
-import { Serializable } from "./serializable";
 import { DerivedSignal, Signal } from "./signal";
 import { Action } from "./types";
 
