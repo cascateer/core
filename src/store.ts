@@ -120,12 +120,12 @@ export class LazyStoreAdapter<
                 >(
                   predicate: UnaryFunction<Args, EndoFunction<T>>,
                   config?: { sameOrigin?: boolean },
-                ) => Action<Args, any>;
+                ) => Action<Args, Data>;
               };
             },
-            Action<Args, any>
+            Action<Args, Data>
           >,
-        ) => Action<Args, any>;
+        ) => Action<Args, Data>;
       },
       MoreActions
     >,
@@ -197,7 +197,7 @@ export class StoreProvider<Data> extends LazyStoreAdapter<
     const seedActions: Observable<MulticastAction<Data, "seedAction">> =
       actions.pipe(
         flatMap((event) =>
-          event.type === "seedAction"
+          isMulticastSeedActionMessage(event)
             ? {
                 ...event,
                 predicate: constant(Serializable.parse(event.data.seed)),
