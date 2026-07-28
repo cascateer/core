@@ -105,6 +105,8 @@ export const createElement = (
       ),
     );
 
+  console.log({ tagContent });
+
   switch (typeof component) {
     case "function":
       return component({ ...propsWithoutChildren, children });
@@ -215,9 +217,7 @@ export const createElement = (
         }
       }
 
-      if (!(element instanceof HTMLInputElement)) {
-        element.append(createFragment({ children }));
-      }
+      element.append(createFragment({ children }));
 
       return element;
     }
