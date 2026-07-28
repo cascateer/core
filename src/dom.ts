@@ -24,6 +24,8 @@ export const insertNodes = <T extends Node>(...nodes: T[]) => ({
        *  */
       if (node instanceof Node) {
         child?.parentNode?.insertBefore(node, child);
+      } else {
+        console.log(node);
       }
     }
 
