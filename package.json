@@ -28,7 +28,7 @@
     "vitest": "^4.1.10"
   },
   "dependencies": {
-    "@cascateer/lib": "^1.0.100",
+    "@cascateer/lib": "^1.0.101",
     "lodash": "^4.18.1",
     "object-hash": "^3.0.0",
     "rxjs": "^7.8.2",
