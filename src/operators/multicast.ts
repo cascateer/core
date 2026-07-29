@@ -3,11 +3,11 @@ import {
   DerivedSignal,
   ProxyReplaySubject,
   ProxySubject,
+  exchangeMessages,
 } from "@cascateer/lib/observable";
 import { Function1 } from "lodash";
 import { concatMap, shareReplay, startWith } from "rxjs";
 import { v4 } from "uuid";
-import { exchangeWith } from "./exchangeWith";
 
 interface MulticastBaseMessage<Data, Type> {
   id: string;
@@ -105,7 +105,7 @@ export const multicast = <Seed>(key: string, seed: Seed): MulticastSubject =>
         },
       })),
       concatMap(async (message) => message({ key, id: v4() })),
-      exchangeWith<MulticastHostMessage, MulticastClientMessage>(
+      exchangeMessages<MulticastHostMessage, MulticastClientMessage>(
         new SharedWorker(new URL("../multicast.ts", import.meta.url), {
           type: "module",
         }).port,

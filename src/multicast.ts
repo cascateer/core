@@ -1,5 +1,10 @@
 import { property } from "@cascateer/lib";
-import { flatMap, ProxyReplaySubject, reduce } from "@cascateer/lib/observable";
+import {
+  exchangeMessages,
+  flatMap,
+  ProxyReplaySubject,
+  reduce,
+} from "@cascateer/lib/observable";
 import { partition, tap, thru, uniqBy } from "lodash";
 import {
   distinct,
@@ -15,7 +20,6 @@ import {
 import { v4 } from "uuid";
 import {
   accumulate,
-  exchangeWith,
   MulticastActionMessage,
   MulticastClientMessage,
 } from "./operators";
@@ -99,7 +103,9 @@ self.addEventListener("connect", ({ ports }) => {
           (action) => tap(action, assertIsMulticastSeedActionMessage),
         ),
         map(({ origin, ...message }) => message),
-        exchangeWith<MulticastClientMessage, MulticastActionMessage<any>>(port),
+        exchangeMessages<MulticastClientMessage, MulticastActionMessage<any>>(
+          port,
+        ),
         map((message) => ({ ...message, origin: port })),
         accumulate(),
         flatMap((messages) =>
