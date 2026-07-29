@@ -1,13 +1,15 @@
 import {
   asArray,
   asFunction,
-  asObservable,
   LazyDictionary,
   MaybeArray,
   MaybeFunction,
-  MaybeObservable,
 } from "@cascateer/lib";
-import { ProxyObservable } from "@cascateer/lib/observable";
+import {
+  asObservable,
+  MaybeObservable,
+  ProxyObservable,
+} from "@cascateer/lib/observable";
 import { Dictionary, flow, Function1, Function2, intersection } from "lodash";
 import {
   combineLatest,

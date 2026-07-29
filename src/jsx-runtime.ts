@@ -1,12 +1,10 @@
+import { asArray, keys, MaybeArray } from "@cascateer/lib";
 import {
-  asArray,
   asObservable,
-  keys,
-  MaybeArray,
   MaybeObservable,
   MaybeObservableInputTuple,
-} from "@cascateer/lib";
-import { reduce } from "@cascateer/lib/observable";
+  reduce,
+} from "@cascateer/lib/observable";
 import {
   bind,
   camelCase,

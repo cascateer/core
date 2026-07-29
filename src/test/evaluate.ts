@@ -1,4 +1,4 @@
-import { MaybePromise } from "@cascateer/lib";
+import { MaybePromise } from "@cascateer/lib/promise";
 import puppeteer, { ElementHandle } from "puppeteer";
 
 const { VITE_HOST, VITE_PORT } = import.meta.env;
