@@ -1,9 +1,9 @@
 {
-  "name": "@cascateer/core",
+  "name": "@cascateer/core_old",
   "version": "2.4.102",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cascateer/core.git"
+    "url": "git+https://github.com/cascateer/core_old.git"
   },
   "scripts": {
     "semver-patch": "npm version patch && git push origin main --tags",
